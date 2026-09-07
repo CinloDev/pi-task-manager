@@ -171,9 +171,12 @@ export class TaskManagerModalOverlay {
   private done: (result: string | undefined) => void;
 
   // View state machine
-  private view: "menu" | "list" | "add_todo" | "select_task" | "select_status" = "menu";
+  private view: "menu" | "list" | "add_todo" | "select_task" | "select_status" | "confirm_export" = "menu";
   private selectedMenuIndex = 0;
   private banner: { text: string; type: "info" | "success" | "warning" } | null = null;
+
+  // Confirm export view state
+  private selectedExportChoice = 0;
 
   // List view state: select and toggle
   private listSelectionIndex = 0; // 0..items.length-1
@@ -283,6 +286,9 @@ export class TaskManagerModalOverlay {
         break;
       case "select_status":
         this.handleSelectStatusInput(data);
+        break;
+      case "confirm_export":
+        this.handleConfirmExportInput(data);
         break;
     }
   }
@@ -404,8 +410,8 @@ export class TaskManagerModalOverlay {
     }
 
     if (item.includes("Exportar dashboard")) {
-      const res = this.manager.exportHtml();
-      this.banner = { text: res.message, type: res.success ? "success" : "warning" };
+      this.view = "confirm_export";
+      this.selectedExportChoice = 0;
       this.tui?.requestRender?.();
       return;
     }
@@ -589,11 +595,55 @@ export class TaskManagerModalOverlay {
     this.tui?.requestRender?.();
   }
 
+  private handleConfirmExportInput(data: string): void {
+    if (data === "\x1b" || data === "\u001b" || data === "b" || data === "B" || data === "q") {
+      this.view = "menu";
+      this.tui?.requestRender?.();
+      return;
+    }
+
+    if (data === "\x1b[A" || data === "k" || data === "\x1b[B" || data === "j") {
+      this.selectedExportChoice = this.selectedExportChoice === 0 ? 1 : 0;
+      this.tui?.requestRender?.();
+      return;
+    }
+
+    if (data === "1") {
+      this.selectedExportChoice = 0;
+      this.executeExport();
+      return;
+    }
+
+    if (data === "2") {
+      this.view = "menu";
+      this.tui?.requestRender?.();
+      return;
+    }
+
+    if (data === "\r" || data === "\n") {
+      if (this.selectedExportChoice === 0) {
+        this.executeExport();
+      } else {
+        this.view = "menu";
+        this.tui?.requestRender?.();
+      }
+    }
+  }
+
+  private executeExport(): void {
+    if (!this.manager) return;
+    const res = this.manager.exportHtml();
+    this.banner = { text: res.message, type: res.success ? "success" : "warning" };
+    this.view = "menu";
+    this.tui?.requestRender?.();
+  }
+
   invalidate(): void {}
   dispose(): void {}
 
   render(termWidth: number): string[] {
-    const boxWidth = Math.max(52, Math.min(74, termWidth - 4));
+    // Generous width so lines and task titles do not truncate prematurely
+    const boxWidth = Math.max(60, Math.min(86, termWidth - 4));
     const innerW = boxWidth - 2;
 
     // Rich Obsidian Dark Violet Palette
@@ -619,8 +669,11 @@ export class TaskManagerModalOverlay {
     const midDouble = () => BG_VIOLET + FG_BORDER + "╠" + "═".repeat(innerW) + "╣" + RESET;
     const botDouble = () => BG_VIOLET + FG_BORDER + "╚" + "═".repeat(innerW) + "╝" + RESET;
 
-    const row = (content: string) =>
-      BG_VIOLET + FG_BORDER + "║" + RESET + BG_VIOLET + padEndVisible(" " + content, innerW) + RESET + BG_VIOLET + FG_BORDER + "║" + RESET;
+    // Keep solid violet background across all text segments without letting \x1b[0m punch transparent holes
+    const row = (content: string) => {
+      const solidContent = content.replace(/\x1b\[0m/g, "\x1b[0m" + BG_VIOLET);
+      return BG_VIOLET + FG_BORDER + "║" + RESET + BG_VIOLET + padEndVisible(" " + solidContent, innerW) + RESET + BG_VIOLET + FG_BORDER + "║" + RESET;
+    };
 
     const emptyRow = () => row("");
 
@@ -681,6 +734,9 @@ export class TaskManagerModalOverlay {
       case "select_status":
         lines.push(...this.renderSelectStatusView(row, emptyRow, FG_ACCENT, FG_MUTED, FG_WHITE, RESET));
         break;
+      case "confirm_export":
+        lines.push(...this.renderConfirmExportView(row, emptyRow, FG_ACCENT, FG_MUTED, FG_WHITE, FG_GREEN, FG_AMBER, RESET));
+        break;
     }
 
     lines.push(midDouble());
@@ -691,6 +747,7 @@ export class TaskManagerModalOverlay {
     if (this.view === "add_todo") helper = " Escribí el texto de la tarea · Enter: Guardar · Esc: Cancelar";
     if (this.view === "select_task") helper = " ↑/↓: Elegir tarea · Enter: Cambiar estado · Esc: Volver";
     if (this.view === "select_status") helper = " ↑/↓/1-4: Seleccionar estado · Enter: Confirmar · Esc: Atrás";
+    if (this.view === "confirm_export") helper = " ↑/↓/1-2: Seleccionar · Enter: Confirmar · Esc: Cancelar y volver";
 
     lines.push(row(` ${FG_MUTED}${helper}${RESET}`));
     lines.push(botDouble());
@@ -904,6 +961,46 @@ export class TaskManagerModalOverlay {
     lines.push(emptyRow());
     return lines;
   }
+
+  private renderConfirmExportView(
+    row: (s: string) => string,
+    emptyRow: () => string,
+    FG_ACCENT: string,
+    FG_MUTED: string,
+    FG_WHITE: string,
+    FG_GREEN: string,
+    FG_AMBER: string,
+    RESET: string
+  ): string[] {
+    const lines: string[] = [emptyRow()];
+    lines.push(row(` ${FG_ACCENT}\x1b[1m📦 Exportar Dashboard como HTML Autónomo${RESET}`));
+    lines.push(emptyRow());
+    lines.push(row(`   ${FG_AMBER}⚠️  Atención:${RESET} ${FG_WHITE}Esto generará un archivo HTML completo (~320 KB) en:${RESET}`));
+    lines.push(row(`   \x1b[38;2;250;204;21m./Task-Manager-Portable.html${RESET}`));
+    lines.push(emptyRow());
+    lines.push(row(`   ${FG_MUTED}Úsalo solo si necesitas compartir o publicar el dashboard estático.${RESET}`));
+    lines.push(row(`   ${FG_MUTED}Para uso local en Pi, el visualizador efímero no ensucia tu repo.${RESET}`));
+    lines.push(emptyRow());
+
+    const choices = [
+      "Sí, exportar archivo HTML a la raíz del proyecto",
+      "Cancelar y volver al menú principal",
+    ];
+
+    for (let i = 0; i < choices.length; i++) {
+      const isSel = i === this.selectedExportChoice;
+      const prefix = `[${i + 1}] `;
+      if (isSel) {
+        const color = i === 0 ? FG_GREEN : FG_AMBER;
+        lines.push(row(` ${FG_ACCENT}\x1b[1m❯ ${prefix}${color}${choices[i]}${RESET}`));
+      } else {
+        lines.push(row(`   ${FG_MUTED}${prefix}${FG_WHITE}${choices[i]}${RESET}`));
+      }
+    }
+
+    lines.push(emptyRow());
+    return lines;
+  }
 }
 
 export async function runInteractiveMenu(manager: TaskManager, ctx: UiContext): Promise<string> {
@@ -920,8 +1017,8 @@ export async function runInteractiveMenu(manager: TaskManager, ctx: UiContext): 
         overlay: true,
         overlayOptions: {
           anchor: "center",
-          width: 74,
-          maxHeight: 25,
+          width: 86,
+          maxHeight: 26,
         },
       }
     );

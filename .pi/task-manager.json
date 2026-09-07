@@ -9,7 +9,7 @@
     "harness": "Pi",
     "harnessRole": "Coding Agent Harness",
     "description": "Pi extension and standalone portable HTML dashboard for project task and SDD phase management",
-    "lastUpdated": "2026-09-07T23:09:15.398Z",
+    "lastUpdated": "2026-09-07T23:57:47.993Z",
     "labels": {
       "es": {
         "overallProgress": "Progreso Global",
@@ -56,14 +56,14 @@
       "id": "phase-2",
       "number": 2,
       "title": "pi-task-manager — Desarrollo Core",
-      "status": "in_progress",
+      "status": "completed",
       "target": "Fase 2",
       "lead": "sdd-apply",
       "tasks": [
         {
           "id": "T2-01",
           "title": "Implementar funcionalidades prioritarias",
-          "status": "in_progress",
+          "status": "completed",
           "tag": "Core",
           "owner": "sdd-apply"
         }
@@ -92,13 +92,13 @@
       "id": "td-1",
       "text": "Completar la especificación inicial con /sdd-init",
       "priority": "P0",
-      "done": false
+      "done": true
     },
     {
       "id": "td-2",
       "text": "Sincronizar tareas con /task-manager sync",
       "priority": "P1",
-      "done": false
+      "done": true
     },
     {
       "id": "td-3",
@@ -110,7 +110,7 @@
       "id": "td-mtrqynkb",
       "text": "Nueva tarea de prueba",
       "priority": "P1",
-      "done": false
+      "done": true
     },
     {
       "id": "td-mtrt8vvn",
@@ -514,17 +514,17 @@
   "tokenUsage": {
     "hasData": true,
     "schemaVersion": "1.0",
-    "updatedAt": "2026-09-07T23:09:15.398Z",
+    "updatedAt": "2026-09-07T23:57:47.993Z",
     "source": "pi-runtime",
     "scope": "pi-task-manager",
     "root": "",
     "totals": {
-      "input": 4507946,
-      "output": 57759,
+      "input": 4723065,
+      "output": 67775,
       "reasoning": 26436,
-      "cacheRead": 67251225,
+      "cacheRead": 94456958,
       "cacheWrite": 0,
-      "total": 71816930,
+      "total": 99247798,
       "cost": 0
     },
     "byAgent": [
@@ -535,19 +535,40 @@
           "ranchesca/gemini-3.8-flash-high",
           "cinlo/gemini-3.8-flash-high"
         ],
-        "total": 71816930,
+        "total": 73784672,
         "cost": 0,
-        "messages": 176,
+        "messages": 180,
         "sessions": 1,
         "evidence": "measured",
         "confidence": 1,
         "categories": {
-          "input": 4507946,
-          "output": 57759,
+          "input": 4523385,
+          "output": 58432,
           "reasoning": 26436,
-          "cacheRead": 67251225,
+          "cacheRead": 69202855,
           "cacheWrite": 0,
-          "total": 71816930
+          "total": 73784672
+        }
+      },
+      {
+        "agent": "Pi",
+        "model": "cinlo/gemini-3.8-flash-high",
+        "models": [
+          "cinlo/gemini-3.8-flash-high"
+        ],
+        "total": 25463126,
+        "cost": 0,
+        "messages": 49,
+        "sessions": 1,
+        "evidence": "measured",
+        "confidence": 1,
+        "categories": {
+          "input": 199680,
+          "output": 9343,
+          "reasoning": 0,
+          "cacheRead": 25254103,
+          "cacheWrite": 0,
+          "total": 25463126
         }
       }
     ]
