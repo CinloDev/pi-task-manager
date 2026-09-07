@@ -225,7 +225,11 @@
   }
   function renderDimensionLines(map) {
     var keys = Object.keys(map || {});
-    var lines = keys.length ? keys.map(function (key) { var bucket = map[key] || {}; return '<span class="insight-dimension-line"><strong>' + esc(key) + '</strong> ' + Math.round(finiteNumber(bucket.completed, 0)) + '/' + Math.round(Math.max(0, finiteNumber(bucket.total, 0))) + '</span>'; }).join('') : '<span class="insight-empty">No task data</span>';
+    var lines = keys.length ? keys.map(function (key) {
+      var bucket = map[key] || {};
+      var label = key === 'Unassigned' ? 'Sin asignar' : (key === 'Untagged' ? 'Sin etiqueta' : key);
+      return '<span class="insight-dimension-line"><strong>' + esc(label) + '</strong> <span style="font-family:var(--font-mono);">' + Math.round(finiteNumber(bucket.completed, 0)) + '/' + Math.round(Math.max(0, finiteNumber(bucket.total, 0))) + '</span></span>';
+    }).join('') : '<span class="insight-empty">Sin datos de tareas</span>';
     return '<div class="insight-dimension-list">' + lines + '</div>';
   }
   function riskCount(insights, level) {
@@ -934,8 +938,8 @@
       + renderTokenChart(insights.tokenUsage)
       + '</div>'
       + '<div class="insight-band-region insight-meta-strip insight-side-rail">'
-      + '<div class="insight-subregion insight-owners"><span class="insight-region-label">Owners</span>' + renderDimensionLines(insights.dimensions && insights.dimensions.owner) + '</div>'
-      + '<div class="insight-subregion insight-tags"><span class="insight-region-label">Tags</span>' + renderDimensionLines(insights.dimensions && insights.dimensions.tag) + '</div>'
+      + '<div class="insight-subregion insight-owners"><span class="insight-region-label">Responsables</span>' + renderDimensionLines(insights.dimensions && insights.dimensions.owner) + '</div>'
+      + '<div class="insight-subregion insight-tags"><span class="insight-region-label">Etiquetas</span>' + renderDimensionLines(insights.dimensions && insights.dimensions.tag) + '</div>'
       + '</div>'
       + '</div>'
       + '</div>';
