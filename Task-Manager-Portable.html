@@ -2286,15 +2286,15 @@
 {
   "schemaVersion": "1.0",
   "meta": {
-    "projectName": "Pi Project",
+    "projectName": "pi-task-manager",
     "version": "1.0.0",
     "branch": "main",
     "commit": "",
     "syncStatus": "Sincronizado",
     "harness": "Pi",
     "harnessRole": "Coding Agent Harness",
-    "description": "Single-file offline project dashboard for Pi coding agent",
-    "lastUpdated": "2026-09-07T07:25:07.195Z",
+    "description": "Pi extension and standalone portable HTML dashboard for project task and SDD phase management",
+    "lastUpdated": "2026-09-07T08:32:03.824Z",
     "labels": {
       "es": {
         "overallProgress": "Progreso Global",
@@ -2364,7 +2364,7 @@
       "id": "phase-2",
       "number": 2,
       "title": "Desarrollo y Lógica Core",
-      "status": "in_progress",
+      "status": "completed",
       "target": "Fase 2",
       "lead": "sdd-apply",
       "tasks": [
@@ -2380,10 +2380,11 @@
         {
           "id": "T2-02",
           "title": "Construir adaptadores e interfaces de usuario",
-          "status": "pending",
+          "status": "completed",
           "tag": "UI",
-          "note": "Componentes y flujos de interacción",
-          "owner": "sdd-apply"
+          "note": "src/ui.ts interactive menu, terminal status, and shortcuts",
+          "owner": "sdd-apply",
+          "commit": "cc50076"
         }
       ]
     },
@@ -2391,24 +2392,27 @@
       "id": "phase-3",
       "number": 3,
       "title": "Testing y Verificación (TDD)",
-      "status": "pending",
+      "status": "completed",
       "target": "Fase 3",
       "lead": "sdd-verify",
       "tasks": [
         {
           "id": "T3-01",
           "title": "Suite de pruebas unitarias y de integración",
-          "status": "pending",
+          "status": "completed",
           "tag": "QA",
-          "note": "Cobertura de casos borde y validación estricta",
-          "owner": "sdd-verify"
+          "note": "Suite of 20 Vitest unit/integration tests verified and passing",
+          "owner": "sdd-verify",
+          "commit": "cc50076"
         },
         {
           "id": "T3-02",
           "title": "Verificación de tipos y linting estricto",
-          "status": "pending",
+          "status": "completed",
           "tag": "QA",
-          "owner": "sdd-verify"
+          "owner": "sdd-verify",
+          "note": "tsc --noEmit strict type checking verified with 0 errors",
+          "commit": "cc50076"
         }
       ]
     },
@@ -2416,24 +2420,27 @@
       "id": "phase-4",
       "number": 4,
       "title": "Revisión RDD y Despliegue",
-      "status": "pending",
+      "status": "completed",
       "target": "Fase 4",
       "lead": "sdd-archive",
       "tasks": [
         {
           "id": "T4-01",
           "title": "Auditoría de revisión de código (RDD)",
-          "status": "pending",
+          "status": "completed",
           "tag": "Review",
-          "note": "Revisión con Gentle AI",
-          "owner": "sdd-review"
+          "note": "Gentle AI RDD review with APPROVED verdict",
+          "owner": "sdd-review",
+          "commit": "9aa04d9"
         },
         {
           "id": "T4-02",
           "title": "Documentación final y release",
-          "status": "pending",
+          "status": "completed",
           "tag": "Docs",
-          "owner": "Orquestador"
+          "owner": "Orquestador",
+          "note": "Documentation, README.md, LICENSE, task-manager skill, and subagent definition",
+          "commit": "9aa04d9"
         }
       ]
     }
@@ -2443,78 +2450,355 @@
       "id": "td-1",
       "text": "Completar la especificación inicial con /sdd-init",
       "priority": "P0",
-      "done": false
+      "done": true
     },
     {
       "id": "td-2",
       "text": "Sincronizar tareas con /task-manager sync",
       "priority": "P1",
-      "done": false
+      "done": true
     },
     {
       "id": "td-3",
       "text": "Revisar cobertura de tests con vitest",
       "priority": "P2",
-      "done": false
+      "done": true
     }
   ],
   "git": {
     "branch": "main",
-    "commits": [],
-    "syncStatus": "Sincronizado"
+    "commits": [
+      {
+        "hash": "9aa04d9",
+        "message": "feat: add task-tracker-manager agent definition",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "372fac6",
+        "message": "feat: dynamic project-aware codegraph, backlog, and openspec task scanning",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "476308d",
+        "message": "chore: sync Task-Manager-Portable.html state",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "3782996",
+        "message": "fix: resolve assemble replace escaping bug and enrich default state with 4 phases and codegraph",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "7477971",
+        "message": "fix: launch actual web browser instead of code editor in WSL2",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "1ded57c",
+        "message": "fix: support WSL2 and cross-platform browser launching in openInBrowser",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "cc50076",
+        "message": "feat: initial implementation of pi-task-manager",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      }
+    ],
+    "syncStatus": "Cambios locales pendientes"
   },
-  "tree": [],
+  "tree": [
+    {
+      "name": "agents/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "task-tracker-manager.md",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "modules/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "01-skeleton.html",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "02-core.js",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "03-header-hud.js",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "04-phases.js",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "05-panels.js",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "06-todo-help.js",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "07-assemble.md",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "scripts/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "assemble.mjs",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "skills/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "task-manager/",
+      "depth": 1,
+      "type": "dir"
+    },
+    {
+      "name": "SKILL.md",
+      "depth": 2,
+      "type": "file"
+    },
+    {
+      "name": "src/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "island.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "manager.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "scanner.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "types.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "ui.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "templates/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "default-state.json",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "test/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "index.test.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "island.test.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "manager.test.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "scanner.test.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": ".gitignore",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "index.ts",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "LICENSE",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "package.json",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "pnpm-lock.yaml",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "pnpm-workspace.yaml",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "README.md",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "Task-Manager-Portable.html",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "tsconfig.json",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "vitest.config.ts",
+      "depth": 0,
+      "type": "file"
+    }
+  ],
   "codegraph": {
     "nodes": [
       {
-        "id": "entry",
-        "label": "Entrypoint",
+        "id": "test-suite",
+        "label": "Suite de Pruebas",
         "files": [
-          "index.ts"
+          "test"
         ],
-        "details": "Punto de entrada y registro de comandos / extensiones"
+        "details": "Pruebas automatizadas unitarias y de integración"
       },
       {
-        "id": "core",
-        "label": "Core Logic",
+        "id": "mod-agents",
+        "label": "AGENTS",
         "files": [
-          "src/manager.ts",
-          "src/island.ts"
+          "agents"
         ],
-        "details": "Lógica de negocio, serialización y estado"
+        "details": "Directorio del proyecto: agents"
       },
       {
-        "id": "ui",
-        "label": "Dashboard UI",
+        "id": "mod-modules",
+        "label": "MODULES",
         "files": [
-          "Task-Manager-Portable.html"
+          "modules"
         ],
-        "details": "Dashboard visual portable para navegador"
+        "details": "Directorio del proyecto: modules"
       },
       {
-        "id": "tests",
-        "label": "Test Suite",
+        "id": "mod-scripts",
+        "label": "SCRIPTS",
         "files": [
-          "test/"
+          "scripts"
         ],
-        "details": "Pruebas automatizadas con Vitest"
+        "details": "Directorio del proyecto: scripts"
+      },
+      {
+        "id": "mod-skills",
+        "label": "SKILLS",
+        "files": [
+          "skills"
+        ],
+        "details": "Directorio del proyecto: skills"
+      },
+      {
+        "id": "mod-src",
+        "label": "SRC",
+        "files": [
+          "src"
+        ],
+        "details": "Directorio del proyecto: src"
+      },
+      {
+        "id": "mod-templates",
+        "label": "TEMPLATES",
+        "files": [
+          "templates"
+        ],
+        "details": "Directorio del proyecto: templates"
       }
     ],
     "edges": [
       {
-        "from": "entry",
-        "to": "core",
-        "label": "usa"
-      },
-      {
-        "from": "core",
-        "to": "ui",
-        "label": "sincroniza"
-      },
-      {
-        "from": "tests",
-        "to": "core",
+        "from": "test-suite",
+        "to": "test-suite",
         "label": "valida"
+      },
+      {
+        "from": "test-suite",
+        "to": "mod-agents",
+        "label": "conecta"
+      },
+      {
+        "from": "mod-agents",
+        "to": "mod-modules",
+        "label": "conecta"
+      },
+      {
+        "from": "mod-modules",
+        "to": "mod-scripts",
+        "label": "conecta"
+      },
+      {
+        "from": "mod-scripts",
+        "to": "mod-skills",
+        "label": "conecta"
+      },
+      {
+        "from": "mod-skills",
+        "to": "mod-src",
+        "label": "conecta"
+      },
+      {
+        "from": "mod-src",
+        "to": "mod-templates",
+        "label": "conecta"
       }
     ]
   }
