@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "1.0",
+  "meta": {
+    "projectName": "Pi Project",
+    "version": "1.0.0",
+    "branch": "main",
+    "commit": "",
+    "syncStatus": "Sincronizado",
+    "harness": "Pi",
+    "harnessRole": "Coding Agent Harness",
+    "description": "Single-file offline project dashboard for Pi coding agent",
+    "lastUpdated": "2026-09-07T00:00:00Z",
+    "labels": {
+      "es": {
+        "overallProgress": "Progreso Global",
+        "filterAll": "Todas",
+        "filterActive": "Activas",
+        "todoTitle": "Tareas Rápidas",
+        "helpTitle": "Ayuda — Cómo usar este archivo",
+        "headerSubtitle": "Dashboard técnico portable — gestionado por Pi y SDD"
+      }
+    },
+    "features": {
+      "git": true,
+      "tree": true,
+      "codegraph": true,
+      "help": true
+    },
+    "history": []
+  },
+  "phases": [
+    {
+      "id": "phase-1",
+      "number": 1,
+      "title": "Inicialización y Arquitectura",
+      "status": "in_progress",
+      "target": "Fase 1",
+      "lead": "Orquestador",
+      "tasks": [
+        {
+          "id": "T1-01",
+          "title": "Configuración inicial del proyecto y dashboard",
+          "status": "completed",
+          "tag": "Setup",
+          "note": "Inicializado con Pi Task Manager",
+          "owner": "Pi",
+          "subtasks": [
+            {
+              "id": "ST1-1",
+              "title": "Crear archivo Task-Manager-Portable.html",
+              "status": "completed",
+              "done": true
+            },
+            {
+              "id": "ST1-2",
+              "title": "Sincronizar metadatos y git",
+              "status": "completed",
+              "done": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "todos": [
+    {
+      "id": "td-1",
+      "text": "Completar la especificación inicial con /sdd-init",
+      "priority": "P0",
+      "done": false
+    },
+    {
+      "id": "td-2",
+      "text": "Sincronizar tareas con /task-manager sync",
+      "priority": "P1",
+      "done": false
+    }
+  ],
+  "git": {
+    "branch": "main",
+    "commits": [],
+    "syncStatus": "Sincronizado"
+  },
+  "tree": [],
+  "codegraph": {
+    "nodes": [],
+    "edges": []
+  }
+}

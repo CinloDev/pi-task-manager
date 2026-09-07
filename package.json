@@ -1,0 +1,53 @@
+{
+  "name": "pi-task-manager",
+  "version": "1.0.0",
+  "description": "Pi extension and standalone portable HTML dashboard for project task and SDD phase management",
+  "type": "module",
+  "main": "./index.ts",
+  "files": [
+    "index.ts",
+    "src",
+    "modules",
+    "scripts",
+    "templates",
+    "skills",
+    "Task-Manager-Portable.html",
+    "README.md",
+    "LICENSE"
+  ],
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "skills": [
+      "./skills"
+    ]
+  },
+  "scripts": {
+    "assemble": "node scripts/assemble.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-coding-agent": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@google/genai",
+      "protobufjs"
+    ]
+  },
+  "license": "MIT"
+}
