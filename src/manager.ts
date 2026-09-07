@@ -140,11 +140,68 @@ export class TaskManager {
     // Populate scanned data
     initialState.git = scan.git;
     initialState.tree = scan.tree;
+    initialState.codegraph = scan.codegraph;
     if (scan.meta.description) {
       initialState.meta.description = scan.meta.description;
     }
     if (scan.phases && scan.phases.length > 0) {
       initialState.phases = scan.phases;
+    } else {
+      // Personalize default phase titles to current project
+      const projName = scan.meta.projectName || "Proyecto";
+      initialState.phases = [
+        {
+          id: "phase-1",
+          number: 1,
+          title: `${projName} — Arquitectura & Setup`,
+          status: "completed",
+          target: "Fase 1",
+          lead: "Orquestador",
+          tasks: [
+            {
+              id: "T1-01",
+              title: `Configurar entorno y base de ${projName}`,
+              status: "completed",
+              tag: "Setup",
+              owner: "Pi",
+            },
+          ],
+        },
+        {
+          id: "phase-2",
+          number: 2,
+          title: `${projName} — Desarrollo Core`,
+          status: "in_progress",
+          target: "Fase 2",
+          lead: "sdd-apply",
+          tasks: [
+            {
+              id: "T2-01",
+              title: "Implementar funcionalidades prioritarias",
+              status: "in_progress",
+              tag: "Core",
+              owner: "sdd-apply",
+            },
+          ],
+        },
+        {
+          id: "phase-3",
+          number: 3,
+          title: `${projName} — Testing y Verificación`,
+          status: "pending",
+          target: "Fase 3",
+          lead: "sdd-verify",
+          tasks: [
+            {
+              id: "T3-01",
+              title: "Verificar cobertura de pruebas y calidad",
+              status: "pending",
+              tag: "QA",
+              owner: "sdd-verify",
+            },
+          ],
+        },
+      ];
     }
 
     const htmlWithState = injectIslandState(baseHtml, initialState);
@@ -172,11 +229,14 @@ export class TaskManager {
 
     state.git = scan.git;
     state.tree = scan.tree;
+    state.codegraph = scan.codegraph;
 
     if (scan.meta.projectName) state.meta.projectName = scan.meta.projectName;
     if (scan.meta.version) state.meta.version = scan.meta.version;
+    if (scan.meta.description) state.meta.description = scan.meta.description;
 
-    if (options.syncTasksFromMarkdown && scan.phases && scan.phases.length > 0) {
+    const shouldSyncPhases = options.syncTasksFromMarkdown !== false;
+    if (shouldSyncPhases && scan.phases && scan.phases.length > 0) {
       state.phases = scan.phases;
     }
 

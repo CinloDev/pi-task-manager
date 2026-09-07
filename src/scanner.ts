@@ -10,6 +10,9 @@ import type {
   GitCommit,
   ProjectMeta,
   TaskStatus,
+  CodeGraph,
+  CodeGraphNode,
+  CodeGraphEdge,
 } from "./types.js";
 
 const DEFAULT_IGNORED_DIRS = new Set([
@@ -169,9 +172,9 @@ export function scanDirectoryTree(
 }
 
 /**
- * Parses markdown tasks (e.g. from tasks.md or SDD specs) into structured Phase[]
+ * Parses markdown tasks from tasks.md, OpenSpec PR units, or Backlog status documents.
  */
-export function parseMarkdownTasks(markdown: string): Phase[] {
+export function parseMarkdownTasks(markdown: string, defaultPhaseTitle?: string): Phase[] {
   const lines = markdown.split("\n");
   const phases: Phase[] = [];
   let currentPhase: Phase | null = null;
@@ -179,30 +182,55 @@ export function parseMarkdownTasks(markdown: string): Phase[] {
   let phaseCounter = 0;
   let taskCounter = 0;
 
-  for (const rawLine of lines) {
-    const line = rawLine.trimEnd();
-
-    // Match Header as Phase (# 1. Title or ## Phase 1: Title)
-    const headerMatch = line.match(/^#{1,3}\s+(?:Phase\s+)?(\d+)?[:.]?\s*(.*)$/i);
-    if (headerMatch && !line.startsWith("### Task") && !line.startsWith("####")) {
-      const num = headerMatch[1] ? parseInt(headerMatch[1], 10) : ++phaseCounter;
-      const title = headerMatch[2].trim() || `Fase ${num}`;
-
+  const ensurePhase = (title?: string): Phase => {
+    if (!currentPhase) {
+      phaseCounter++;
       currentPhase = {
-        id: `phase-${num}`,
-        number: num,
-        title,
+        id: `phase-${phaseCounter}`,
+        number: phaseCounter,
+        title: title || defaultPhaseTitle || `Fase ${phaseCounter}`,
         status: "pending",
-        target: `Fase ${num}`,
+        target: `Fase ${phaseCounter}`,
         tasks: [],
       };
       phases.push(currentPhase);
-      currentTask = null;
-      continue;
+    }
+    return currentPhase;
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+
+    // 1. Match Headers as Phases (e.g. # 1. Title, ## Phase 2: Title, ## PR 1: Title, ### Tier S: Title)
+    const headerMatch = line.match(/^#{1,3}\s+(?:Phase\s+|PR\s+|Fase\s+|Tier\s+|Hito\s+|Milestone\s+)?(\d+)?[:.]?\s*(.*)$/i);
+    if (
+      headerMatch &&
+      !line.startsWith("### Task") &&
+      !line.toLowerCase().includes("review workload forecast") &&
+      !line.toLowerCase().includes("resumen ejecutivo")
+    ) {
+      const num = headerMatch[1] ? parseInt(headerMatch[1], 10) : ++phaseCounter;
+      const rawTitle = headerMatch[2].trim() || `Fase ${num}`;
+      // Clean up markdown formatting in title
+      const title = rawTitle.replace(/\*\*/g, "").replace(/`/g, "").trim();
+
+      if (title.length > 2) {
+        currentPhase = {
+          id: `phase-${num}`,
+          number: num,
+          title,
+          status: "pending",
+          target: `Fase ${num}`,
+          tasks: [],
+        };
+        phases.push(currentPhase);
+        currentTask = null;
+        continue;
+      }
     }
 
-    // Match Task (- [x] or - [ ])
-    const taskMatch = line.match(/^(\s*)-\s+\[([ xX])\]\s+(.+)$/);
+    // 2. Match Standard Checkbox Tasks (- [x] or - [ ])
+    const taskMatch = line.match(/^(\s*)[-*+]\s+\[([ xX])\]\s+(.+)$/);
     if (taskMatch) {
       const indent = taskMatch[1].length;
       const isDone = taskMatch[2].toLowerCase() === "x";
@@ -221,21 +249,10 @@ export function parseMarkdownTasks(markdown: string): Phase[] {
         continue;
       }
 
-      // Top-level task
-      if (!currentPhase) {
-        currentPhase = {
-          id: `phase-${++phaseCounter}`,
-          number: phaseCounter,
-          title: "Tareas Principales",
-          status: "pending",
-          tasks: [],
-        };
-        phases.push(currentPhase);
-      }
-
+      const activePhase = ensurePhase();
       taskCounter++;
-      // Parse optional comment metadata: <!-- id: T1, tag: Core, owner: Pi -->
-      let id = `T${currentPhase.number}-${String(taskCounter).padStart(2, "0")}`;
+
+      let id = `T${activePhase.number}-${String(taskCounter).padStart(2, "0")}`;
       let tag: string | undefined;
       let owner: string | undefined;
       let cleanedTitle = rawText;
@@ -248,7 +265,7 @@ export function parseMarkdownTasks(markdown: string): Phase[] {
         if (idM) id = idM[1];
         const tagM = metaStr.match(/tag:\s*([^\s,;]+)/);
         if (tagM) tag = tagM[1];
-        const ownerM = metaStr.match(/owner:\s*([^\s,;]+)/);
+        const ownerM = metaStr.match(/(?:owner|sdd-owner):\s*([^\s,;]+)/);
         if (ownerM) owner = ownerM[1];
       }
 
@@ -261,13 +278,50 @@ export function parseMarkdownTasks(markdown: string): Phase[] {
         owner,
         subtasks: [],
       };
-      currentPhase.tasks.push(currentTask);
+      activePhase.tasks.push(currentTask);
+      continue;
+    }
+
+    // 3. Match Backlog items with status badges (e.g. 1. **WebP Converter** `[✅ COMPLETADO]` or `[⏳ EN PROGRESO]`)
+    const backlogMatch = line.match(/^\s*(?:\d+\.|\*|-)\s+\*\*([^*]+)\*\*\s*(?:`?\[([^\]]+)\]`?)?(.*)$/);
+    if (backlogMatch && !line.includes("|") && backlogMatch[1].length > 3) {
+      const activePhase = ensurePhase();
+      taskCounter++;
+
+      const itemTitle = backlogMatch[1].trim();
+      const statusBadge = (backlogMatch[2] || "").toLowerCase();
+      const extraNote = backlogMatch[3]?.trim();
+
+      let status: TaskStatus = "pending";
+      if (statusBadge.includes("✅") || statusBadge.includes("completado") || statusBadge.includes("done")) {
+        status = "completed";
+      } else if (
+        statusBadge.includes("⏳") ||
+        statusBadge.includes("progreso") ||
+        statusBadge.includes("planificación") ||
+        statusBadge.includes("siguiente")
+      ) {
+        status = "in_progress";
+      } else if (statusBadge.includes("❌") || statusBadge.includes("bloqueado")) {
+        status = "blocked";
+      }
+
+      currentTask = {
+        id: `T${activePhase.number}-${String(taskCounter).padStart(2, "0")}`,
+        title: itemTitle,
+        status,
+        note: extraNote ? extraNote.replace(/^[-:]\s*/, "") : undefined,
+        subtasks: [],
+      };
+      activePhase.tasks.push(currentTask);
     }
   }
 
+  // Filter out phases that ended up with 0 tasks
+  const nonEmptyPhases = phases.filter((p) => p.tasks.length > 0);
+
   // Derive phase statuses based on child tasks
-  for (const phase of phases) {
-    if (phase.tasks.length === 0) continue;
+  for (const phase of nonEmptyPhases) {
     const completed = phase.tasks.filter((t) => t.status === "completed").length;
     if (completed === phase.tasks.length) {
       phase.status = "completed";
@@ -278,21 +332,23 @@ export function parseMarkdownTasks(markdown: string): Phase[] {
     }
   }
 
-  return phases;
+  return nonEmptyPhases;
 }
 
 /**
- * Searches for any task markdown file (tasks.md, openspec tasks, etc.)
+ * Searches for task markdown files across standard paths, OpenSpec changes, and Backlog documents.
  */
 export function findProjectTasks(workspaceRoot: string): Phase[] | null {
-  const candidatePaths = [
+  // 1. Root standard task lists
+  const rootCandidates = [
     path.join(workspaceRoot, "tasks.md"),
     path.join(workspaceRoot, "task.md"),
     path.join(workspaceRoot, "TODO.md"),
+    path.join(workspaceRoot, "TASKS.md"),
     path.join(workspaceRoot, "openspec", "tasks.md"),
   ];
 
-  for (const cPath of candidatePaths) {
+  for (const cPath of rootCandidates) {
     if (fs.existsSync(cPath)) {
       try {
         const content = fs.readFileSync(cPath, "utf-8");
@@ -302,45 +358,230 @@ export function findProjectTasks(workspaceRoot: string): Phase[] | null {
     }
   }
 
-  // Check openspec/changes/*/tasks.md
+  // 2. OpenSpec active changes (aggregate all active changes into phases)
   const changesDir = path.join(workspaceRoot, "openspec", "changes");
   if (fs.existsSync(changesDir)) {
     try {
       const changes = fs.readdirSync(changesDir, { withFileTypes: true });
+      const aggregatedPhases: Phase[] = [];
+      let phaseIndex = 0;
+
       for (const change of changes) {
-        if (change.isDirectory()) {
-          const changeTasksPath = path.join(changesDir, change.name, "tasks.md");
-          if (fs.existsSync(changeTasksPath)) {
-            const content = fs.readFileSync(changeTasksPath, "utf-8");
-            const phases = parseMarkdownTasks(content);
-            if (phases.length > 0) return phases;
+        if (!change.isDirectory() || change.name === "archive") continue;
+
+        const changeTasksPath = path.join(changesDir, change.name, "tasks.md");
+        if (fs.existsSync(changeTasksPath)) {
+          const content = fs.readFileSync(changeTasksPath, "utf-8");
+          const changeTitle = change.name
+            .split("-")
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ");
+
+          const parsed = parseMarkdownTasks(content, changeTitle);
+          if (parsed.length > 0) {
+            for (const p of parsed) {
+              phaseIndex++;
+              aggregatedPhases.push({
+                ...p,
+                id: `phase-${phaseIndex}`,
+                number: phaseIndex,
+                title: `${changeTitle} — ${p.title}`,
+              });
+            }
           }
         }
       }
+
+      if (aggregatedPhases.length > 0) {
+        return aggregatedPhases;
+      }
     } catch {}
+  }
+
+  // 3. Backlog & Roadmap documents (e.g. BACKLOG02.md, BACKLOG.md, docs/ROADMAP.md)
+  const backlogCandidates = [
+    path.join(workspaceRoot, "BACKLOG02.md"),
+    path.join(workspaceRoot, "BACKLOG.md"),
+    path.join(workspaceRoot, "docs", "ROADMAP.md"),
+    path.join(workspaceRoot, "ROADMAP.md"),
+    path.join(workspaceRoot, "IMPROVEMENTS.md"),
+  ];
+
+  for (const bPath of backlogCandidates) {
+    if (fs.existsSync(bPath)) {
+      try {
+        const content = fs.readFileSync(bPath, "utf-8");
+        const phases = parseMarkdownTasks(content);
+        if (phases.length > 0) return phases;
+      } catch {}
+    }
   }
 
   return null;
 }
 
 /**
- * Combines all scanner sources into one payload.
+ * Dynamically generates an architecture CodeGraph tailored to the actual project's codebase.
+ */
+export function generateProjectCodegraph(workspaceRoot: string): CodeGraph {
+  const nodes: CodeGraphNode[] = [];
+  const edges: CodeGraphEdge[] = [];
+
+  const addNode = (id: string, label: string, files: string[], details: string) => {
+    nodes.push({ id, label, files, details });
+  };
+
+  const addEdge = (from: string, to: string, label?: string) => {
+    edges.push({ from, to, label });
+  };
+
+  const srcDir = fs.existsSync(path.join(workspaceRoot, "src"))
+    ? path.join(workspaceRoot, "src")
+    : workspaceRoot;
+
+  // 1. Discover Features / Modules
+  const featuresDir = fs.existsSync(path.join(srcDir, "features"))
+    ? path.join(srcDir, "features")
+    : fs.existsSync(path.join(workspaceRoot, "features"))
+    ? path.join(workspaceRoot, "features")
+    : null;
+
+  const featureNodeIds: string[] = [];
+
+  if (featuresDir) {
+    try {
+      const items = fs.readdirSync(featuresDir, { withFileTypes: true });
+      const featureDirs = items.filter((d) => d.isDirectory()).slice(0, 10);
+
+      for (const feat of featureDirs) {
+        const featId = `feat-${feat.name}`;
+        const featLabel = feat.name
+          .split("-")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ");
+
+        const relPath = path.relative(workspaceRoot, path.join(featuresDir, feat.name));
+        addNode(featId, featLabel, [relPath], `Módulo feature: ${feat.name}`);
+        featureNodeIds.push(featId);
+      }
+    } catch {}
+  }
+
+  // 2. Discover Routing / Pages / App
+  const pagesDir = fs.existsSync(path.join(srcDir, "pages"))
+    ? path.join(srcDir, "pages")
+    : fs.existsSync(path.join(srcDir, "app"))
+    ? path.join(srcDir, "app")
+    : fs.existsSync(path.join(workspaceRoot, "pages"))
+    ? path.join(workspaceRoot, "pages")
+    : fs.existsSync(path.join(workspaceRoot, "app"))
+    ? path.join(workspaceRoot, "app")
+    : null;
+
+  if (pagesDir) {
+    const relPath = path.relative(workspaceRoot, pagesDir);
+    addNode("routing", "Páginas & Enrutamiento", [relPath], "Vistas, rutas y pantallas de la aplicación");
+
+    // Connect routing to discovered features
+    for (const fId of featureNodeIds) {
+      addEdge("routing", fId, "renderiza");
+    }
+  }
+
+  // 3. Discover Shared UI / Components
+  const componentsDir = fs.existsSync(path.join(srcDir, "components"))
+    ? path.join(srcDir, "components")
+    : fs.existsSync(path.join(srcDir, "shared"))
+    ? path.join(srcDir, "shared")
+    : null;
+
+  if (componentsDir) {
+    const relPath = path.relative(workspaceRoot, componentsDir);
+    addNode("ui-components", "Componentes UI & Shared", [relPath], "Design system, primitivas UI y componentes compartidos");
+
+    for (const fId of featureNodeIds) {
+      addEdge(fId, "ui-components", "usa");
+    }
+  }
+
+  // 4. Discover Core / Lib / Services
+  const coreDir = fs.existsSync(path.join(srcDir, "core"))
+    ? path.join(srcDir, "core")
+    : fs.existsSync(path.join(srcDir, "lib"))
+    ? path.join(srcDir, "lib")
+    : fs.existsSync(path.join(srcDir, "services"))
+    ? path.join(srcDir, "services")
+    : null;
+
+  if (coreDir) {
+    const relPath = path.relative(workspaceRoot, coreDir);
+    addNode("core-logic", "Lógica Core & Servicios", [relPath], "Lógica de negocio, integración y almacenamiento");
+
+    for (const fId of featureNodeIds) {
+      addEdge(fId, "core-logic", "consume");
+    }
+  }
+
+  // 5. Discover Test Suite
+  const testDir = fs.existsSync(path.join(workspaceRoot, "test"))
+    ? "test"
+    : fs.existsSync(path.join(workspaceRoot, "tests"))
+    ? "tests"
+    : fs.existsSync(path.join(srcDir, "__tests__"))
+    ? "src/__tests__"
+    : null;
+
+  if (testDir) {
+    addNode("test-suite", "Suite de Pruebas", [testDir], "Pruebas automatizadas unitarias y de integración");
+    if (featureNodeIds.length > 0) {
+      addEdge("test-suite", featureNodeIds[0], "valida");
+    } else if (nodes.length > 0) {
+      addEdge("test-suite", nodes[0].id, "valida");
+    }
+  }
+
+  // Fallback: If no structured src directories exist, scan top-level folders
+  if (nodes.length < 2) {
+    try {
+      const rootDirs = fs
+        .readdirSync(workspaceRoot, { withFileTypes: true })
+        .filter((d) => d.isDirectory() && !DEFAULT_IGNORED_DIRS.has(d.name) && !d.name.startsWith("."))
+        .slice(0, 6);
+
+      for (const d of rootDirs) {
+        addNode(`mod-${d.name}`, d.name.toUpperCase(), [d.name], `Directorio del proyecto: ${d.name}`);
+      }
+
+      for (let i = 0; i < nodes.length - 1; i++) {
+        addEdge(nodes[i].id, nodes[i + 1].id, "conecta");
+      }
+    } catch {}
+  }
+
+  return { nodes, edges };
+}
+
+/**
+ * Combines all scanner sources into one comprehensive payload.
  */
 export function scanWorkspace(workspaceRoot: string): {
   meta: Partial<ProjectMeta>;
   git: GitState;
   tree: TreeItem[];
   phases?: Phase[];
+  codegraph: CodeGraph;
 } {
   const meta = detectProjectMeta(workspaceRoot);
   const git = scanGitState(workspaceRoot);
   const tree = scanDirectoryTree(workspaceRoot);
   const phases = findProjectTasks(workspaceRoot) || undefined;
+  const codegraph = generateProjectCodegraph(workspaceRoot);
 
   return {
     meta,
     git,
     tree,
     phases,
+    codegraph,
   };
 }
