@@ -67,18 +67,60 @@ Seguimiento paso a paso de fases de desarrollo (*Setup*, *Core*, *Testing*, *Rev
 
 ## 🚀 Instalación y Configuración en Pi
 
-### Enlace Local de la Extensión
-Clona o enlaza este repositorio en tu directorio de extensiones de Pi:
+Puedes instalar `pi-task-manager` de dos formas muy sencillas según cómo prefieras usarlo:
+
+### Opción 1: Instalación directa como Pi Package (Recomendada)
+Si eres usuario de **Pi**, puedes instalarlo directamente con el gestor de paquetes oficial de Pi usando la URL de GitHub (¡sin clonar a mano ni configurar rutas!):
 
 ```bash
-# Crear enlace simbólico en tus extensiones de Pi
-ln -s /ruta/a/pi-task-manager ~/.pi/agent/extensions/pi-task-manager
+# Instalación global en Pi
+pi install https://github.com/CinloDev/pi-task-manager
+
+# O si prefieres instalarlo solo para el proyecto actual:
+pi install -l https://github.com/CinloDev/pi-task-manager
 ```
 
-Recarga Pi o reinicia tu sesión:
+Luego, dentro de tu sesión interactiva de Pi, recarga las extensiones:
 ```text
 /reload
 ```
+
+---
+
+### Opción 2: Clonado Local o Desarrollo (Para desarrolladores y colaboradores)
+Si quieres clonar el código y tenerlo vinculado en vivo:
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/CinloDev/pi-task-manager.git
+cd pi-task-manager
+
+# 2. Instalar dependencias
+pnpm install
+
+# 3. Enlazar la extensión local en tu Pi
+ln -s "$(pwd)" ~/.pi/agent/extensions/pi-task-manager
+```
+
+Dentro de Pi, ejecuta `/reload` y ¡listo! Ya tienes activas todas las herramientas, comandos y el modal flotante con <kbd>alt+t</kbd>.
+
+---
+
+## 🎯 ¿Cómo se usa? (Primeros Pasos)
+
+Una vez instalado, **no necesitas configurar nada**. Al abrir cualquier proyecto en tu terminal con Pi:
+
+1. **Abrir el Modal Flotante Interactivo**:
+   Presiona **<kbd>alt+t</kbd>** (o escribe `/task-manager`). Se abrirá la ventana modal Obsidian violeta en el centro de tu terminal:
+   * Podrás inicializar el gestor si es la primera vez (`.pi/task-manager.json`).
+   * Podrás ver el avance de tus fases y tareas.
+   * Podrás agregar y tildar *Todos* rápidos al instante con <kbd>Enter</kbd>.
+   * Podrás abrir el visor gráfico en tu navegador con la opción `[1]`.
+2. **Uso para Agentes de IA (Orquestador y Subagentes)**:
+   Si usas flujos con agentes o SDD, Pi ya tiene registradas las herramientas automáticas:
+   * `task_manager_read`: El agente lee las tareas sin que tengas que explicárselas.
+   * `task_manager_update_task`: El agente tilda tareas como `completed` o `in_progress` cuando termina de programar.
+   * `task_manager_sync`: Reconcilia automáticamente commits de Git y tareas en `tasks.md` o OpenSpec.
 
 ---
 
