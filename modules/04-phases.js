@@ -78,9 +78,137 @@
     return { owners: Object.keys(owners).sort(), tags: Object.keys(tags).sort(), phases: phases };
   }
 
+  function closeAllCustomSelects(doc) {
+    if (!doc) return;
+    var openWrappers = doc.querySelectorAll('.custom-select-wrapper.open');
+    openWrappers.forEach(function (w) {
+      w.classList.remove('open');
+      var trg = w.querySelector('.custom-select-trigger');
+      if (trg) trg.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function setupCustomSelect(select, doc) {
+    if (!select || !doc) return;
+    var wrapperId = 'custom-wrap-' + select.id;
+    var existingWrapper = doc.getElementById(wrapperId);
+    if (existingWrapper) {
+      updateCustomSelect(select);
+      return;
+    }
+
+    select.style.display = 'none';
+    select.setAttribute('aria-hidden', 'true');
+
+    var wrapper = doc.createElement('div');
+    wrapper.className = 'custom-select-wrapper';
+    wrapper.id = wrapperId;
+
+    var trigger = doc.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'custom-select-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+
+    var labelSpan = doc.createElement('span');
+    labelSpan.className = 'custom-select-label';
+
+    var arrowSpan = doc.createElement('span');
+    arrowSpan.className = 'custom-select-arrow';
+    arrowSpan.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+
+    trigger.appendChild(labelSpan);
+    trigger.appendChild(arrowSpan);
+
+    var dropdown = doc.createElement('div');
+    dropdown.className = 'custom-select-dropdown';
+    dropdown.setAttribute('role', 'listbox');
+
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(dropdown);
+
+    if (select.parentNode) {
+      select.parentNode.insertBefore(wrapper, select.nextSibling);
+    }
+
+    trigger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var isOpen = wrapper.classList.contains('open');
+      closeAllCustomSelects(doc);
+      if (!isOpen) {
+        wrapper.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    if (doc.documentElement && doc.documentElement.getAttribute('data-custom-select-bound') !== '1') {
+      doc.documentElement.setAttribute('data-custom-select-bound', '1');
+      doc.addEventListener('click', function () {
+        closeAllCustomSelects(doc);
+      });
+      doc.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeAllCustomSelects(doc);
+      });
+    }
+
+    updateCustomSelect(select);
+  }
+
+  function updateCustomSelect(select) {
+    if (!select) return;
+    var doc = select.ownerDocument || document;
+    var wrapper = doc.getElementById('custom-wrap-' + select.id);
+    if (!wrapper) return;
+
+    var trigger = wrapper.querySelector('.custom-select-trigger');
+    var labelSpan = wrapper.querySelector('.custom-select-label');
+    var dropdown = wrapper.querySelector('.custom-select-dropdown');
+    if (!trigger || !labelSpan || !dropdown) return;
+
+    var selectedOpt = select.options[select.selectedIndex];
+    var currentText = selectedOpt ? selectedOpt.text : (select.options[0] ? select.options[0].text : 'Todos');
+    labelSpan.textContent = currentText;
+
+    dropdown.innerHTML = '';
+    for (var i = 0; i < select.options.length; i++) {
+      var opt = select.options[i];
+      var isSelected = opt.selected;
+      var optEl = doc.createElement('div');
+      optEl.className = 'custom-select-option' + (isSelected ? ' selected' : '');
+      optEl.setAttribute('role', 'option');
+      optEl.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+      optEl.setAttribute('data-value', opt.value);
+
+      var textSpan = doc.createElement('span');
+      textSpan.textContent = opt.text;
+      optEl.appendChild(textSpan);
+
+      if (isSelected) {
+        var checkSpan = doc.createElement('span');
+        checkSpan.className = 'custom-select-check';
+        checkSpan.textContent = '✓';
+        optEl.appendChild(checkSpan);
+      }
+
+      (function (val, txt) {
+        optEl.addEventListener('click', function (e) {
+          e.stopPropagation();
+          select.value = val;
+          labelSpan.textContent = txt;
+          wrapper.classList.remove('open');
+          trigger.setAttribute('aria-expanded', 'false');
+          updateCustomSelect(select);
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      })(opt.value, opt.text);
+
+      dropdown.appendChild(optEl);
+    }
+  }
+
   function setOptions(select, values, selected) {
     if (!select) return;
-    var html = '<option value="">All</option>';
+    var html = '<option value="">Todos</option>';
     values.forEach(function (value) {
       var label = typeof value === 'object' ? value.label : value;
       var optionValue = typeof value === 'object' ? value.value : value;
@@ -88,6 +216,7 @@
     });
     select.innerHTML = html;
     select.value = selected || '';
+    updateCustomSelect(select);
   }
 
   function setupFilterControls(doc, state) {
@@ -98,6 +227,11 @@
     setOptions(doc.getElementById('task-filter-phase'), Object.keys(options.phases).sort().map(function (id) {
       return { value: id, label: options.phases[id] };
     }), current.phase);
+
+    setupCustomSelect(doc.getElementById('task-filter-status'), doc);
+    setupCustomSelect(doc.getElementById('task-filter-owner'), doc);
+    setupCustomSelect(doc.getElementById('task-filter-tag'), doc);
+    setupCustomSelect(doc.getElementById('task-filter-phase'), doc);
 
     var bindings = [
       ['task-filter-text', 'text', 'input'],
@@ -733,7 +867,14 @@
       tag: doc.getElementById('task-filter-tag'),
       phase: doc.getElementById('task-filter-phase')
     };
-    Object.keys(controls).forEach(function (key) { if (controls[key]) controls[key].value = next[key] || ''; });
+    Object.keys(controls).forEach(function (key) {
+      if (controls[key]) {
+        controls[key].value = next[key] || '';
+        if (typeof updateCustomSelect === 'function' && key !== 'text') {
+          updateCustomSelect(controls[key]);
+        }
+      }
+    });
     applyFilter(doc);
   }
 

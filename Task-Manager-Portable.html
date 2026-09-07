@@ -637,12 +637,134 @@
     .filter-field select {
       width: 100%;
       min-height: 44px;
-      padding: 6px 8px;
+      padding: 6px 12px;
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
       background: var(--bg-surface-primary);
       color: var(--text-primary);
       font: inherit;
+    }
+
+    /* Custom Select Component */
+    .custom-select-wrapper {
+      position: relative;
+      width: 100%;
+      user-select: none;
+    }
+
+    .custom-select-trigger {
+      width: 100%;
+      min-height: 44px;
+      background: var(--bg-surface-primary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 14.5px;
+      font-weight: 600;
+      text-align: left;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .custom-select-trigger:hover {
+      border-color: rgba(188, 140, 255, 0.45);
+      background: var(--bg-surface-tertiary);
+    }
+
+    .custom-select-wrapper.open .custom-select-trigger {
+      border-color: var(--accent-purple);
+      box-shadow: 0 0 0 3px rgba(188, 140, 255, 0.25);
+      background: var(--bg-surface-tertiary);
+    }
+
+    .custom-select-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+
+    .custom-select-arrow {
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-purple);
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .custom-select-wrapper.open .custom-select-arrow {
+      transform: rotate(180deg);
+    }
+
+    .custom-select-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      min-width: 100%;
+      background: #140a28;
+      border: 1px solid rgba(188, 140, 255, 0.35);
+      border-radius: var(--radius-md);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.75), 0 0 16px rgba(188, 140, 255, 0.18);
+      padding: 6px;
+      z-index: 250;
+      max-height: 260px;
+      overflow-y: auto;
+      display: none;
+      flex-direction: column;
+      gap: 3px;
+      animation: customSelectFadeIn 0.15s ease;
+    }
+
+    @keyframes customSelectFadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .custom-select-wrapper.open .custom-select-dropdown {
+      display: flex;
+    }
+
+    .custom-select-option {
+      padding: 9px 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      transition: all 0.12s ease;
+    }
+
+    .custom-select-option:hover {
+      background: rgba(188, 140, 255, 0.18);
+      color: #ffffff;
+    }
+
+    .custom-select-option.selected {
+      background: rgba(188, 140, 255, 0.28);
+      color: #ffffff;
+      font-weight: 700;
+      border-left: 3px solid var(--accent-purple);
+    }
+
+    .custom-select-check {
+      color: var(--accent-purple);
+      font-weight: 800;
+      font-size: 13px;
     }
 
     .filter-field input::placeholder { color: var(--text-muted); }
@@ -2365,7 +2487,7 @@
     "harness": "Pi",
     "harnessRole": "Coding Agent Harness",
     "description": "Single-file offline project dashboard for Pi coding agent",
-    "lastUpdated": "2026-09-07T09:21:06.304Z",
+    "lastUpdated": "2026-09-07T09:32:24.436Z",
     "labels": {
       "es": {
         "overallProgress": "Progreso Global",
@@ -4892,9 +5014,137 @@
     return { owners: Object.keys(owners).sort(), tags: Object.keys(tags).sort(), phases: phases };
   }
 
+  function closeAllCustomSelects(doc) {
+    if (!doc) return;
+    var openWrappers = doc.querySelectorAll('.custom-select-wrapper.open');
+    openWrappers.forEach(function (w) {
+      w.classList.remove('open');
+      var trg = w.querySelector('.custom-select-trigger');
+      if (trg) trg.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function setupCustomSelect(select, doc) {
+    if (!select || !doc) return;
+    var wrapperId = 'custom-wrap-' + select.id;
+    var existingWrapper = doc.getElementById(wrapperId);
+    if (existingWrapper) {
+      updateCustomSelect(select);
+      return;
+    }
+
+    select.style.display = 'none';
+    select.setAttribute('aria-hidden', 'true');
+
+    var wrapper = doc.createElement('div');
+    wrapper.className = 'custom-select-wrapper';
+    wrapper.id = wrapperId;
+
+    var trigger = doc.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'custom-select-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+
+    var labelSpan = doc.createElement('span');
+    labelSpan.className = 'custom-select-label';
+
+    var arrowSpan = doc.createElement('span');
+    arrowSpan.className = 'custom-select-arrow';
+    arrowSpan.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+
+    trigger.appendChild(labelSpan);
+    trigger.appendChild(arrowSpan);
+
+    var dropdown = doc.createElement('div');
+    dropdown.className = 'custom-select-dropdown';
+    dropdown.setAttribute('role', 'listbox');
+
+    wrapper.appendChild(trigger);
+    wrapper.appendChild(dropdown);
+
+    if (select.parentNode) {
+      select.parentNode.insertBefore(wrapper, select.nextSibling);
+    }
+
+    trigger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var isOpen = wrapper.classList.contains('open');
+      closeAllCustomSelects(doc);
+      if (!isOpen) {
+        wrapper.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    if (doc.documentElement && doc.documentElement.getAttribute('data-custom-select-bound') !== '1') {
+      doc.documentElement.setAttribute('data-custom-select-bound', '1');
+      doc.addEventListener('click', function () {
+        closeAllCustomSelects(doc);
+      });
+      doc.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeAllCustomSelects(doc);
+      });
+    }
+
+    updateCustomSelect(select);
+  }
+
+  function updateCustomSelect(select) {
+    if (!select) return;
+    var doc = select.ownerDocument || document;
+    var wrapper = doc.getElementById('custom-wrap-' + select.id);
+    if (!wrapper) return;
+
+    var trigger = wrapper.querySelector('.custom-select-trigger');
+    var labelSpan = wrapper.querySelector('.custom-select-label');
+    var dropdown = wrapper.querySelector('.custom-select-dropdown');
+    if (!trigger || !labelSpan || !dropdown) return;
+
+    var selectedOpt = select.options[select.selectedIndex];
+    var currentText = selectedOpt ? selectedOpt.text : (select.options[0] ? select.options[0].text : 'Todos');
+    labelSpan.textContent = currentText;
+
+    dropdown.innerHTML = '';
+    for (var i = 0; i < select.options.length; i++) {
+      var opt = select.options[i];
+      var isSelected = opt.selected;
+      var optEl = doc.createElement('div');
+      optEl.className = 'custom-select-option' + (isSelected ? ' selected' : '');
+      optEl.setAttribute('role', 'option');
+      optEl.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+      optEl.setAttribute('data-value', opt.value);
+
+      var textSpan = doc.createElement('span');
+      textSpan.textContent = opt.text;
+      optEl.appendChild(textSpan);
+
+      if (isSelected) {
+        var checkSpan = doc.createElement('span');
+        checkSpan.className = 'custom-select-check';
+        checkSpan.textContent = '✓';
+        optEl.appendChild(checkSpan);
+      }
+
+      (function (val, txt) {
+        optEl.addEventListener('click', function (e) {
+          e.stopPropagation();
+          select.value = val;
+          labelSpan.textContent = txt;
+          wrapper.classList.remove('open');
+          trigger.setAttribute('aria-expanded', 'false');
+          updateCustomSelect(select);
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      })(opt.value, opt.text);
+
+      dropdown.appendChild(optEl);
+    }
+  }
+
   function setOptions(select, values, selected) {
     if (!select) return;
-    var html = '<option value="">All</option>';
+    var html = '<option value="">Todos</option>';
     values.forEach(function (value) {
       var label = typeof value === 'object' ? value.label : value;
       var optionValue = typeof value === 'object' ? value.value : value;
@@ -4902,6 +5152,7 @@
     });
     select.innerHTML = html;
     select.value = selected || '';
+    updateCustomSelect(select);
   }
 
   function setupFilterControls(doc, state) {
@@ -4912,6 +5163,11 @@
     setOptions(doc.getElementById('task-filter-phase'), Object.keys(options.phases).sort().map(function (id) {
       return { value: id, label: options.phases[id] };
     }), current.phase);
+
+    setupCustomSelect(doc.getElementById('task-filter-status'), doc);
+    setupCustomSelect(doc.getElementById('task-filter-owner'), doc);
+    setupCustomSelect(doc.getElementById('task-filter-tag'), doc);
+    setupCustomSelect(doc.getElementById('task-filter-phase'), doc);
 
     var bindings = [
       ['task-filter-text', 'text', 'input'],
@@ -5547,7 +5803,14 @@
       tag: doc.getElementById('task-filter-tag'),
       phase: doc.getElementById('task-filter-phase')
     };
-    Object.keys(controls).forEach(function (key) { if (controls[key]) controls[key].value = next[key] || ''; });
+    Object.keys(controls).forEach(function (key) {
+      if (controls[key]) {
+        controls[key].value = next[key] || '';
+        if (typeof updateCustomSelect === 'function' && key !== 'text') {
+          updateCustomSelect(controls[key]);
+        }
+      }
+    });
     applyFilter(doc);
   }
 
