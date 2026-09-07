@@ -100,10 +100,10 @@
       max-width: 1720px;
       width: 100%;
       margin: 0 auto;
-      padding: 16px 24px 64px;
+      padding: 20px 24px 72px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 24px;
     }
 
     .app-container,
@@ -1267,18 +1267,64 @@
       gap: 16px;
     }
 
-    .overview-detail-stack { display: flex; flex-direction: column; gap: 16px; }
+    .overview-detail-stack { display: flex; flex-direction: column; gap: 24px; }
     .overview-section-copy { color: var(--text-tertiary); font-size: 12px; max-width: 70ch; }
-    .overview-phase-list { display: flex; flex-direction: column; gap: 12px; }
-    .overview-phase-row, .overview-phase-card { background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: border-color 0.15s ease; }
-    .overview-phase-card:hover { border-color: var(--border-medium); }
+    .overview-phase-list { display: flex; flex-direction: column; gap: 16px; }
+    .overview-phase-row, .overview-phase-card {
+      background: var(--bg-surface-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .overview-phase-card:hover {
+      border-color: var(--border-medium);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    }
     .overview-phase-card.collapsed .overview-phase-tasks-grid { display: none; }
     .overview-phase-card.collapsed .overview-phase-toggle-icon { transform: rotate(-90deg); }
-    .overview-phase-heading { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+    .overview-phase-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      width: 100%;
+      cursor: pointer;
+      user-select: none;
+    }
+    .overview-phase-heading-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+    .overview-phase-toggle-icon {
+      width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-purple);
+      background: rgba(188, 140, 255, 0.1);
+      border: 1px solid rgba(188, 140, 255, 0.25);
+      border-radius: 6px;
+      transition: transform 0.2s ease, background 0.15s ease, border-color 0.15s ease;
+      flex-shrink: 0;
+    }
+    .overview-phase-card:hover .overview-phase-toggle-icon {
+      background: rgba(188, 140, 255, 0.22);
+      border-color: rgba(188, 140, 255, 0.5);
+      color: #fff;
+    }
     .overview-phase-heading-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
     .overview-phase-heading-info strong { color: var(--text-primary); font-size: 14.5px; overflow-wrap: anywhere; }
     .overview-phase-submeta { display: flex; flex-wrap: wrap; gap: 8px; color: var(--text-tertiary); font-size: 11.5px; }
-    .overview-phase-heading-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .overview-phase-heading-right { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
     .overview-phase-pct-label { font: 700 13px var(--font-mono); color: var(--text-secondary); }
     .overview-phase-tasks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 4px; }
     .overview-task-card { background: var(--bg-surface-primary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; border-left: 3px solid var(--border-subtle); }
@@ -1438,17 +1484,21 @@
     .progress-bar.blocked { background: var(--accent-red); }
 
     /* Phases & Tasks */
-    .phases-container { display: flex; flex-direction: column; gap: 12px; }
+    .phases-container { display: flex; flex-direction: column; gap: 16px; }
 
     .phase-card {
       background: var(--bg-surface-primary);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md);
       overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
-    .phase-card:hover { border-color: var(--border-medium); }
+    .phase-card:hover {
+      border-color: var(--border-medium);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    }
     .phase-card.active-phase { border-color: rgba(88, 166, 255, 0.4); box-shadow: var(--glow-blue); }
 
     .phase-header {
@@ -1469,7 +1519,24 @@
 
     .phase-header:hover { background: rgba(255, 255, 255, 0.05); }
     .phase-header-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 240px; }
-    .phase-toggle-icon { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); transition: transform 0.2s ease; }
+    .phase-toggle-icon {
+      width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-purple);
+      background: rgba(188, 140, 255, 0.1);
+      border: 1px solid rgba(188, 140, 255, 0.25);
+      border-radius: 6px;
+      transition: transform 0.2s ease, background 0.15s ease, border-color 0.15s ease;
+      flex-shrink: 0;
+    }
+    .phase-header:hover .phase-toggle-icon {
+      background: rgba(188, 140, 255, 0.22);
+      border-color: rgba(188, 140, 255, 0.5);
+      color: #fff;
+    }
     .phase-card.collapsed .phase-toggle-icon { transform: rotate(-90deg); }
     .phase-number { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--text-tertiary); background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); padding: 2px 7px; border-radius: 4px; }
     .phase-title-text { font-size: 14.5px; font-weight: 600; color: var(--text-primary); }
@@ -2296,7 +2363,7 @@
     "harness": "Pi",
     "harnessRole": "Coding Agent Harness",
     "description": "Single-file offline project dashboard for Pi coding agent",
-    "lastUpdated": "2026-09-07T08:49:30.957Z",
+    "lastUpdated": "2026-09-07T08:57:15.832Z",
     "labels": {
       "es": {
         "overallProgress": "Progreso Global",
@@ -5138,7 +5205,8 @@
 
       return '<article class="overview-phase-row overview-phase-card collapsed">'
         + '<div class="overview-phase-heading" role="button" tabindex="0" aria-expanded="false" style="cursor:pointer;" title="Clic para expandir/colapsar">'
-        + '<span class="overview-phase-toggle-icon" style="display:inline-flex;align-items:center;margin-right:6px;color:var(--text-secondary);transition:transform 0.2s ease;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></span>'
+        + '<div class="overview-phase-heading-left">'
+        + '<span class="overview-phase-toggle-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg></span>'
         + '<span class="phase-number">FASE ' + phaseNumber + '</span>'
         + '<div class="overview-phase-heading-info">'
         + '<strong>' + esc(phase.title || 'Fase') + '</strong>'
@@ -5146,6 +5214,7 @@
         + '<span>' + completedCount + ' / ' + tasks.length + ' tareas completadas</span>'
         + (phase.lead ? '<span>· Lead: ' + esc(phase.lead) + '</span>' : '')
         + (phase.target ? '<span>· Meta: ' + esc(phase.target) + '</span>' : '')
+        + '</div>'
         + '</div>'
         + '</div>'
         + '<div class="overview-phase-heading-right">'

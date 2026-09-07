@@ -393,7 +393,8 @@
 
       return '<article class="overview-phase-row overview-phase-card collapsed">'
         + '<div class="overview-phase-heading" role="button" tabindex="0" aria-expanded="false" style="cursor:pointer;" title="Clic para expandir/colapsar">'
-        + '<span class="overview-phase-toggle-icon" style="display:inline-flex;align-items:center;margin-right:6px;color:var(--text-secondary);transition:transform 0.2s ease;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></span>'
+        + '<div class="overview-phase-heading-left">'
+        + '<span class="overview-phase-toggle-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg></span>'
         + '<span class="phase-number">FASE ' + phaseNumber + '</span>'
         + '<div class="overview-phase-heading-info">'
         + '<strong>' + esc(phase.title || 'Fase') + '</strong>'
@@ -401,6 +402,7 @@
         + '<span>' + completedCount + ' / ' + tasks.length + ' tareas completadas</span>'
         + (phase.lead ? '<span>· Lead: ' + esc(phase.lead) + '</span>' : '')
         + (phase.target ? '<span>· Meta: ' + esc(phase.target) + '</span>' : '')
+        + '</div>'
         + '</div>'
         + '</div>'
         + '<div class="overview-phase-heading-right">'
