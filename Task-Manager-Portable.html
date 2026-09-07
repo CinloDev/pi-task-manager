@@ -2293,7 +2293,7 @@
     "harness": "Pi",
     "harnessRole": "Coding Agent Harness",
     "description": "Single-file offline project dashboard for Pi coding agent",
-    "lastUpdated": "2026-09-07T06:53:10.267Z",
+    "lastUpdated": "2026-09-07T07:21:20.632Z",
     "labels": {
       "es": {
         "overallProgress": "Progreso Global",
@@ -2310,23 +2310,29 @@
       "codegraph": true,
       "help": true
     },
-    "history": []
+    "history": [
+      {
+        "timestamp": "2026-09-07T00:00:00Z",
+        "completed": 2,
+        "total": 8
+      }
+    ]
   },
   "phases": [
     {
       "id": "phase-1",
       "number": 1,
       "title": "Inicialización y Arquitectura",
-      "status": "in_progress",
+      "status": "completed",
       "target": "Fase 1",
       "lead": "Orquestador",
       "tasks": [
         {
           "id": "T1-01",
-          "title": "Configuración inicial del proyecto y dashboard",
+          "title": "Configuración del proyecto y entorno",
           "status": "completed",
           "tag": "Setup",
-          "note": "Inicializado con Pi Task Manager",
+          "note": "Estructura inicial del repositorio y dependencias",
           "owner": "Pi",
           "subtasks": [
             {
@@ -2342,6 +2348,90 @@
               "done": true
             }
           ]
+        },
+        {
+          "id": "T1-02",
+          "title": "Definir contratos de arquitectura y tipos",
+          "status": "completed",
+          "tag": "Arch",
+          "note": "Definición de modelos de datos e interfaces principales",
+          "owner": "sdd-spec"
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "number": 2,
+      "title": "Desarrollo y Lógica Core",
+      "status": "in_progress",
+      "target": "Fase 2",
+      "lead": "sdd-apply",
+      "tasks": [
+        {
+          "id": "T2-01",
+          "title": "Implementar módulos de lógica principal",
+          "status": "in_progress",
+          "tag": "Core",
+          "note": "En desarrollo con subagente sdd-apply",
+          "owner": "sdd-apply"
+        },
+        {
+          "id": "T2-02",
+          "title": "Construir adaptadores e interfaces de usuario",
+          "status": "pending",
+          "tag": "UI",
+          "note": "Componentes y flujos de interacción",
+          "owner": "sdd-apply"
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "number": 3,
+      "title": "Testing y Verificación (TDD)",
+      "status": "pending",
+      "target": "Fase 3",
+      "lead": "sdd-verify",
+      "tasks": [
+        {
+          "id": "T3-01",
+          "title": "Suite de pruebas unitarias y de integración",
+          "status": "pending",
+          "tag": "QA",
+          "note": "Cobertura de casos borde y validación estricta",
+          "owner": "sdd-verify"
+        },
+        {
+          "id": "T3-02",
+          "title": "Verificación de tipos y linting estricto",
+          "status": "pending",
+          "tag": "QA",
+          "owner": "sdd-verify"
+        }
+      ]
+    },
+    {
+      "id": "phase-4",
+      "number": 4,
+      "title": "Revisión RDD y Despliegue",
+      "status": "pending",
+      "target": "Fase 4",
+      "lead": "sdd-archive",
+      "tasks": [
+        {
+          "id": "T4-01",
+          "title": "Auditoría de revisión de código (RDD)",
+          "status": "pending",
+          "tag": "Review",
+          "note": "Revisión con Gentle AI",
+          "owner": "sdd-review"
+        },
+        {
+          "id": "T4-02",
+          "title": "Documentación final y release",
+          "status": "pending",
+          "tag": "Docs",
+          "owner": "Orquestador"
         }
       ]
     }
@@ -2358,6 +2448,12 @@
       "text": "Sincronizar tareas con /task-manager sync",
       "priority": "P1",
       "done": false
+    },
+    {
+      "id": "td-3",
+      "text": "Revisar cobertura de tests con vitest",
+      "priority": "P2",
+      "done": false
     }
   ],
   "git": {
@@ -2367,8 +2463,58 @@
   },
   "tree": [],
   "codegraph": {
-    "nodes": [],
-    "edges": []
+    "nodes": [
+      {
+        "id": "entry",
+        "label": "Entrypoint",
+        "files": [
+          "index.ts"
+        ],
+        "details": "Punto de entrada y registro de comandos / extensiones"
+      },
+      {
+        "id": "core",
+        "label": "Core Logic",
+        "files": [
+          "src/manager.ts",
+          "src/island.ts"
+        ],
+        "details": "Lógica de negocio, serialización y estado"
+      },
+      {
+        "id": "ui",
+        "label": "Dashboard UI",
+        "files": [
+          "Task-Manager-Portable.html"
+        ],
+        "details": "Dashboard visual portable para navegador"
+      },
+      {
+        "id": "tests",
+        "label": "Test Suite",
+        "files": [
+          "test/"
+        ],
+        "details": "Pruebas automatizadas con Vitest"
+      }
+    ],
+    "edges": [
+      {
+        "from": "entry",
+        "to": "core",
+        "label": "usa"
+      },
+      {
+        "from": "core",
+        "to": "ui",
+        "label": "sincroniza"
+      },
+      {
+        "from": "tests",
+        "to": "core",
+        "label": "valida"
+      }
+    ]
   }
 }</script>
 
@@ -3493,9 +3639,7 @@
         ? 'Estimación por actividad'
         : (item.evidence === 'measured' ? 'Medido' : (item.evidence === 'derived' ? 'Derivado' : 'Estimado'));
       var evidenceClass = isActivityEstimation ? 'token-evidence-estimated' : ('token-evidence-' + item.evidence);
-      var costText = (!isActivityEstimation && item.cost !== undefined) ? ' · 
-</html>
- + item.cost.toFixed(3) : '';
+      var costText = (!isActivityEstimation && item.cost !== undefined) ? ' · $' + item.cost.toFixed(3) : '';
       var unitLabel = isActivityEstimation ? ' u. activ.' : ' tokens';
 
       var barInnerHtml = isActivityEstimation
@@ -3555,9 +3699,7 @@
     var rows = byAgent.map(function (item) {
       if (item.evidence === 'estimated') anyEstimated = true;
       var cats = item.categories || {};
-      var costStr = (!isActivityEstimation && item.cost !== undefined) ? '
-</html>
- + item.cost.toFixed(4) : '—';
+      var costStr = (!isActivityEstimation && item.cost !== undefined) ? '$' + item.cost.toFixed(4) : '—';
       var evidenceLabel = isActivityEstimation
         ? 'Estimación por actividad'
         : (item.evidence === 'measured' ? 'Medido' : (item.evidence === 'derived' ? 'Derivado' : 'Estimado'));
@@ -3579,9 +3721,7 @@
         + '</tr>';
     }).join('');
 
-    var totalCostStr = (!isActivityEstimation && totals.cost !== undefined) ? '
-</html>
- + totals.cost.toFixed(4) : '—';
+    var totalCostStr = (!isActivityEstimation && totals.cost !== undefined) ? '$' + totals.cost.toFixed(4) : '—';
     var totalSessions = byAgent.reduce(function (sum, a) { return sum + (a.sessions || 0); }, 0);
     var totalMessages = byAgent.reduce(function (sum, a) { return sum + (a.messages || 0); }, 0);
     var totalColLabel = isActivityEstimation ? 'Total Actividad' : 'Total Tokens';
@@ -4356,9 +4496,7 @@
             + '<span class="token-chip token-chip-total">' + formatCompactTokens(totals.total) + (isAct ? ' u. activ.' : ' tokens') + '</span>'
             + '<span class="token-chip">' + tokenUsage.byAgent.length + ' agentes</span>'
             + (cacheShare > 0 ? '<span class="token-chip">' + cacheShare + '% caché</span>' : '')
-            + (totals.cost !== undefined ? '<span class="token-chip">
-</html>
- + totals.cost.toFixed(3) + '</span>' : '')
+            + (totals.cost !== undefined ? '<span class="token-chip">$' + totals.cost.toFixed(3) + '</span>' : '')
             + (isAct ? '<span class="token-chip token-chip-estimate">Estimación por actividad</span>' : '')
             + (tokenUsage.isStale ? '<span class="token-chip token-chip-stale">⚠️ Desactualizado (&gt;24h)</span>' : '')
             + '</div>';

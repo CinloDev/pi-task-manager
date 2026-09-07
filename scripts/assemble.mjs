@@ -40,7 +40,7 @@ export function assembleHtml(customState = null) {
 
   const islandRegex = /<script[^>]*id="tm-state"[^>]*>[\s\S]*?<\/script>/;
   const newIsland = `<script type="application/json" id="tm-state">${islandJson}</script>`;
-  let html = skeleton.replace(islandRegex, newIsland);
+  let html = skeleton.replace(islandRegex, () => newIsland);
 
   const scriptsBlock = `
 <!-- MODULES: classic scripts, no bundler, file:// compatible -->
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </body>`;
 
   if (html.includes('</body>')) {
-    html = html.replace('</body>', scriptsBlock);
+    html = html.replace('</body>', () => scriptsBlock);
   } else {
     html += scriptsBlock + '\n</html>';
   }
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
   Tokens: Obsidian Dark theme
 -->
 `;
-  html = html.replace('<!DOCTYPE html>', '<!DOCTYPE html>\n' + headerComment);
+  html = html.replace('<!DOCTYPE html>', () => '<!DOCTYPE html>\n' + headerComment);
   return html;
 }
 

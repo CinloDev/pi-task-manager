@@ -55,7 +55,7 @@ export function injectIslandState(html: string, state: TaskManagerState): string
     throw new Error("Target HTML has no <script id=\"tm-state\"> block to replace.");
   }
 
-  return html.replace(ISLAND_REGEX, replacement);
+  return html.replace(ISLAND_REGEX, () => replacement);
 }
 
 /**
@@ -127,23 +127,29 @@ export function createInitialState(
         codegraph: true,
         help: true,
       },
-      history: [],
+      history: [
+        {
+          timestamp: new Date().toISOString(),
+          completed: 2,
+          total: 8,
+        },
+      ],
     },
     phases: [
       {
         id: "phase-1",
         number: 1,
         title: "Inicialización y Arquitectura",
-        status: "in_progress",
+        status: "completed",
         target: "Fase 1",
         lead: "Orquestador",
         tasks: [
           {
             id: "T1-01",
-            title: "Configuración inicial del proyecto y dashboard",
+            title: "Configuración del proyecto y entorno",
             status: "completed",
             tag: "Setup",
-            note: "Inicializado con Pi Task Manager",
+            note: "Estructura inicial del repositorio y dependencias",
             owner: "Pi",
             subtasks: [
               {
@@ -159,6 +165,90 @@ export function createInitialState(
                 done: true,
               },
             ],
+          },
+          {
+            id: "T1-02",
+            title: "Definir contratos de arquitectura y tipos",
+            status: "completed",
+            tag: "Arch",
+            note: "Definición de modelos de datos e interfaces principales",
+            owner: "sdd-spec",
+          },
+        ],
+      },
+      {
+        id: "phase-2",
+        number: 2,
+        title: "Desarrollo y Lógica Core",
+        status: "in_progress",
+        target: "Fase 2",
+        lead: "sdd-apply",
+        tasks: [
+          {
+            id: "T2-01",
+            title: "Implementar módulos de lógica principal",
+            status: "in_progress",
+            tag: "Core",
+            note: "En desarrollo con subagente sdd-apply",
+            owner: "sdd-apply",
+          },
+          {
+            id: "T2-02",
+            title: "Construir adaptadores e interfaces de usuario",
+            status: "pending",
+            tag: "UI",
+            note: "Componentes y flujos de interacción",
+            owner: "sdd-apply",
+          },
+        ],
+      },
+      {
+        id: "phase-3",
+        number: 3,
+        title: "Testing y Verificación (TDD)",
+        status: "pending",
+        target: "Fase 3",
+        lead: "sdd-verify",
+        tasks: [
+          {
+            id: "T3-01",
+            title: "Suite de pruebas unitarias y de integración",
+            status: "pending",
+            tag: "QA",
+            note: "Cobertura de casos borde y validación estricta",
+            owner: "sdd-verify",
+          },
+          {
+            id: "T3-02",
+            title: "Verificación de tipos y linting estricto",
+            status: "pending",
+            tag: "QA",
+            owner: "sdd-verify",
+          },
+        ],
+      },
+      {
+        id: "phase-4",
+        number: 4,
+        title: "Revisión RDD y Despliegue",
+        status: "pending",
+        target: "Fase 4",
+        lead: "sdd-archive",
+        tasks: [
+          {
+            id: "T4-01",
+            title: "Auditoría de revisión de código (RDD)",
+            status: "pending",
+            tag: "Review",
+            note: "Revisión con Gentle AI",
+            owner: "sdd-review",
+          },
+          {
+            id: "T4-02",
+            title: "Documentación final y release",
+            status: "pending",
+            tag: "Docs",
+            owner: "Orquestador",
           },
         ],
       },
@@ -176,6 +266,12 @@ export function createInitialState(
         priority: "P1",
         done: false,
       },
+      {
+        id: "td-3",
+        text: "Revisar cobertura de tests con vitest",
+        priority: "P2",
+        done: false,
+      },
     ],
     git: {
       branch,
@@ -184,8 +280,37 @@ export function createInitialState(
     },
     tree: [],
     codegraph: {
-      nodes: [],
-      edges: [],
+      nodes: [
+        {
+          id: "entry",
+          label: "Entrypoint",
+          files: ["index.ts"],
+          details: "Punto de entrada y registro de comandos / extensiones",
+        },
+        {
+          id: "core",
+          label: "Core Logic",
+          files: ["src/manager.ts", "src/island.ts"],
+          details: "Lógica de negocio, serialización y estado",
+        },
+        {
+          id: "ui",
+          label: "Dashboard UI",
+          files: ["Task-Manager-Portable.html"],
+          details: "Dashboard visual portable para navegador",
+        },
+        {
+          id: "tests",
+          label: "Test Suite",
+          files: ["test/"],
+          details: "Pruebas automatizadas con Vitest",
+        },
+      ],
+      edges: [
+        { from: "entry", to: "core", label: "usa" },
+        { from: "core", to: "ui", label: "sincroniza" },
+        { from: "tests", to: "core", label: "valida" },
+      ],
     },
   };
 }
