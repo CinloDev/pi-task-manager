@@ -1533,34 +1533,34 @@
       color: #fff;
     }
     .phase-card.collapsed .phase-toggle-icon { transform: rotate(-90deg); }
-    .phase-number { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--text-tertiary); background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); padding: 2px 7px; border-radius: 4px; }
-    .phase-title-text { font-size: 14.5px; font-weight: 600; color: var(--text-primary); }
-    .phase-header-right { display: flex; align-items: center; gap: 14px; }
+    .phase-number { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--text-tertiary); background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); padding: 3px 8px; border-radius: 4px; }
+    .phase-title-text { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+    .phase-header-right { display: flex; align-items: center; gap: 16px; }
     .phase-progress-info { display: flex; align-items: center; gap: 10px; width: 180px; }
-    .phase-progress-pct { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text-secondary); width: 36px; text-align: right; }
+    .phase-progress-pct { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--text-secondary); width: 40px; text-align: right; }
 
     .phase-tasks-wrapper {
-      padding: 12px 18px 16px;
+      padding: 16px 20px 20px;
       background: var(--bg-surface-primary);
       border-top: 1px solid var(--border-subtle);
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 12px;
     }
 
     .phase-card.collapsed .phase-tasks-wrapper { display: none; }
-    .phase-meta-bar { padding-top: 4px; display: flex; justify-content: space-between; align-items: center; color: var(--text-tertiary); font-size: 12px; border-bottom: 1px dashed var(--border-subtle); padding-bottom: 10px; margin-bottom: 4px; }
+    .phase-meta-bar { padding-top: 4px; display: flex; justify-content: space-between; align-items: center; color: var(--text-tertiary); font-size: 13px; border-bottom: 1px dashed var(--border-subtle); padding-bottom: 10px; margin-bottom: 6px; }
 
     .task-item {
       background: var(--bg-surface-secondary);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
-      padding: 12px 14px;
+      padding: 14px 16px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
       transition: all 0.15s ease;
-      font-size: 13px;
+      font-size: 14px;
     }
 
     .task-item:hover { border-color: var(--border-medium); background: var(--bg-surface-tertiary); }
@@ -1591,21 +1591,21 @@
     .custom-checkbox:checked { background: var(--color-completed); border-color: var(--accent-green); }
     .custom-checkbox:checked::before { content: ""; width: 9px; height: 5px; border-left: 2px solid #fff; border-bottom: 2px solid #fff; transform: rotate(-45deg) translate(1px,-1px); }
 
-    .task-title { font-size: 13.5px; font-weight: 500; color: var(--text-primary); cursor: pointer; }
+    .task-title { font-size: 15px; font-weight: 600; color: var(--text-primary); cursor: pointer; }
     .task-item.status-completed .task-title { text-decoration: line-through; color: var(--text-tertiary); }
-    .task-id { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); margin-right: 4px; }
+    .task-id { font-family: var(--font-mono); font-size: 12px; color: var(--text-tertiary); margin-right: 6px; }
     .task-badges { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .task-note { font-size: 12px; color: var(--text-secondary); padding-left: 27px; line-height: 1.4; }
-    .task-footer-row { display: flex; align-items: center; justify-content: space-between; padding-left: 27px; font-size: 11px; color: var(--text-tertiary); gap: 12px; flex-wrap: wrap; box-sizing: border-box; max-width: 100%; }
+    .task-note { font-size: 13px; color: var(--text-secondary); padding-left: 27px; line-height: 1.45; }
+    .task-footer-row { display: flex; align-items: center; justify-content: space-between; padding-left: 27px; font-size: 12px; color: var(--text-tertiary); gap: 12px; flex-wrap: wrap; box-sizing: border-box; max-width: 100%; }
     .task-owner-pill { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); color: var(--text-secondary); }
 
     /* Todo & Help */
-    .todo-list { display: flex; flex-direction: column; gap: 8px; }
+    .todo-list { display: flex; flex-direction: column; gap: 10px; }
     .todo-item {
       background: var(--bg-surface-secondary);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
-      padding: 10px 12px;
+      padding: 12px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -1614,7 +1614,7 @@
     }
     .todo-item.done .todo-text { text-decoration: line-through; color: var(--text-tertiary); }
     .todo-left { display: flex; align-items: center; gap: 10px; flex: 1; }
-    .todo-text { font-size: 13px; color: var(--text-primary); cursor: pointer; }
+    .todo-text { font-size: 14.5px; color: var(--text-primary); cursor: pointer; }
     .informational-empty { color: var(--text-tertiary); font-size: 13px; padding: 18px; text-align: center; border: 1px dashed var(--border-medium); border-radius: var(--radius-sm); }
 
     .help-panel {
