@@ -4,3 +4,6 @@ dist/
 .DS_Store
 # Local Pi runtime state
 .atl/
+# Built portable HTML artifact (generated dynamically or on assemble)
+Task-Manager-Portable.html
+

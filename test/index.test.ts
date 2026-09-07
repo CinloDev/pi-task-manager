@@ -65,11 +65,18 @@ describe("Pi Task Manager Extension Registration", () => {
     // Run init
     const initOutput = await commandHandler("init", mockCtx);
     expect(initOutput).toContain("Task Manager initialized");
-    expect(fs.existsSync(path.join(tempDir, "Task-Manager-Portable.html"))).toBe(true);
+    // Verifies the workspace only holds .pi/task-manager.json and NOT the 7k-line HTML
+    expect(fs.existsSync(path.join(tempDir, ".pi", "task-manager.json"))).toBe(true);
+    expect(fs.existsSync(path.join(tempDir, "Task-Manager-Portable.html"))).toBe(false);
 
     // Run status
     const statusOutput = await commandHandler("status", mockCtx);
     expect(statusOutput).toContain("Task Manager:");
+
+    // Run export on-demand
+    const exportOutput = await commandHandler("export", mockCtx);
+    expect(exportOutput).toContain("Dashboard exportado exitosamente");
+    expect(fs.existsSync(path.join(tempDir, "Task-Manager-Portable.html"))).toBe(true);
   });
 
   it("executes task_manager_read tool", async () => {

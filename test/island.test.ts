@@ -105,11 +105,9 @@ describe("Task Manager Island Parser & Serializer", () => {
     expect(initial.schemaVersion).toBe("1.0");
   });
 
-  it("can parse and round-trip the assembled Task-Manager-Portable.html", async () => {
-    const fs = await import("node:fs");
-    const path = await import("node:path");
-    const filePath = path.resolve(__dirname, "../Task-Manager-Portable.html");
-    const html = fs.readFileSync(filePath, "utf-8");
+  it("can parse and round-trip dynamically assembled HTML cockpit", async () => {
+    const { assembleHtml } = await import("../src/assembler.js");
+    const html = assembleHtml();
 
     const state = parseIslandState(html);
     expect(state.schemaVersion).toBe("1.0");

@@ -92,4 +92,32 @@ describe("TaskManager Core Service", () => {
     expect(typeof res.message).toBe("string");
     expect(typeof res.success).toBe("boolean");
   });
+
+  it("supports exporting standalone HTML on demand", () => {
+    manager.init();
+    expect(fs.existsSync(path.join(tempDir, ".pi", "task-manager.json"))).toBe(true);
+    expect(fs.existsSync(path.join(tempDir, "Task-Manager-Portable.html"))).toBe(false);
+
+    const expRes = manager.exportHtml();
+    expect(expRes.success).toBe(true);
+    expect(fs.existsSync(path.join(tempDir, "Task-Manager-Portable.html"))).toBe(true);
+
+    const html = fs.readFileSync(path.join(tempDir, "Task-Manager-Portable.html"), "utf-8");
+    expect(html).toContain('id="tm-state"');
+  });
+
+  it("falls back to reading legacy Task-Manager-Portable.html if .pi/task-manager.json is missing", () => {
+    manager.init();
+    manager.exportHtml();
+    // Remove .pi/task-manager.json
+    fs.rmSync(path.join(tempDir, ".pi"), { recursive: true, force: true });
+    expect(fs.existsSync(path.join(tempDir, ".pi", "task-manager.json"))).toBe(false);
+    expect(fs.existsSync(path.join(tempDir, "Task-Manager-Portable.html"))).toBe(true);
+
+    // New manager instance should detect legacy HTML
+    const legacyManager = new TaskManager({ workspaceRoot: tempDir });
+    expect(legacyManager.exists()).toBe(true);
+    const state = legacyManager.getState();
+    expect(state.meta.projectName).toBe("temp-mock-project");
+  });
 });

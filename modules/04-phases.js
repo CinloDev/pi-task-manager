@@ -513,9 +513,10 @@
 
           return '<div class="overview-task-card status-' + (tStatus === 'in-progress' ? 'inprogress' : tStatus) + '" role="button" tabindex="0" aria-haspopup="dialog" data-task-id="' + esc(task.id || 'T') + '" data-phase-id="' + esc(phase.id || '') + '" title="Clic para ver detalles de la tarea">'
             + '<div class="overview-task-top">'
-            + '<div class="overview-task-id-title"><span class="task-id">' + esc(task.id || 'T') + '</span> <span class="overview-task-title">' + esc(task.title || 'Sin título') + '</span></div>'
+            + '<span class="task-id">' + esc(task.id || 'T') + '</span>'
             + '<span class="badge ' + tBadgeCls + '" style="font-size:10px;padding:2px 6px;"><span class="badge-dot ' + tDotCls + '"></span> ' + tBadgeLabel + '</span>'
             + '</div>'
+            + '<div class="overview-task-title">' + esc(task.title || 'Sin título') + '</div>'
             + notePreview
             + '<div class="overview-task-bottom">'
             + '<div class="overview-task-meta-left">' + tagStr + subtasksPill + '</div>'
@@ -527,21 +528,23 @@
 
       return '<article class="overview-phase-row overview-phase-card collapsed">'
         + '<div class="overview-phase-heading" role="button" tabindex="0" aria-expanded="false" style="cursor:pointer;" title="Clic para expandir/colapsar">'
-        + '<div class="overview-phase-heading-left">'
+        + '<div class="overview-phase-header-top">'
+        + '<div class="overview-phase-badges">'
         + '<span class="overview-phase-toggle-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg></span>'
         + '<span class="phase-number">FASE ' + phaseNumber + '</span>'
-        + '<div class="overview-phase-heading-info">'
-        + '<strong>' + esc(phase.title || 'Fase') + '</strong>'
-        + '<div class="overview-phase-submeta">'
-        + '<span>' + completedCount + ' / ' + tasks.length + ' tareas completadas</span>'
-        + (phase.lead ? '<span>· Lead: ' + esc(phase.lead) + '</span>' : '')
-        + (phase.target ? '<span>· Meta: ' + esc(phase.target) + '</span>' : '')
-        + '</div>'
-        + '</div>'
         + '</div>'
         + '<div class="overview-phase-heading-right">'
         + '<span class="badge ' + statusBadgeClass(phase.status) + '"><span class="badge-dot ' + statusDotClass(phase.status) + '"></span> ' + statusLabel(phase.status) + '</span>'
         + '<span class="overview-phase-pct-label">' + pct + '%</span>'
+        + '</div>'
+        + '</div>'
+        + '<div class="overview-phase-heading-info">'
+        + '<strong>' + esc(phase.title || 'Fase') + '</strong>'
+        + '<div class="overview-phase-submeta">'
+        + '<span>' + completedCount + '/' + tasks.length + ' tareas</span>'
+        + (phase.lead ? '<span class="submeta-sep">·</span><span>Lead: ' + esc(phase.lead) + '</span>' : '')
+        + (phase.target ? '<span class="submeta-sep">·</span><span>Meta: ' + esc(phase.target) + '</span>' : '')
+        + '</div>'
         + '</div>'
         + '</div>'
         + '<div class="progress-track"><div class="progress-bar ' + (normalizeStatus(phase.status) === 'completed' ? 'completed' : 'inprogress') + '" style="width:' + pct + '%;"></div></div>'

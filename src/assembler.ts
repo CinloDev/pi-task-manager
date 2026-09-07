@@ -1,50 +1,64 @@
-// scripts/assemble.mjs — Concatenate modules into single drop-in HTML (zero deps, file:// compatible)
-import { readFileSync, writeFileSync, statSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import type { TaskManagerState } from "./types.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.resolve(__dirname, '..');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const defaultProjectRoot = path.resolve(__dirname, "..");
 
-const skeletonPath = path.join(projectRoot, 'modules', '01-skeleton.html');
-const stylesDir = path.join(projectRoot, 'modules', 'styles');
-const tokensPath = path.join(stylesDir, 'tokens.css');
-const layoutPath = path.join(stylesDir, 'layout.css');
-const componentsPath = path.join(stylesDir, 'components.css');
-const corePath = path.join(projectRoot, 'modules', '02-core.js');
-const hudPath = path.join(projectRoot, 'modules', '03-header-hud.js');
-const phasesPath = path.join(projectRoot, 'modules', '04-phases.js');
-const panelsPath = path.join(projectRoot, 'modules', '05-panels.js');
-const todoHelpPath = path.join(projectRoot, 'modules', '06-todo-help.js');
-const templateStatePath = path.join(projectRoot, 'templates', 'default-state.json');
-const portablePath = path.join(projectRoot, 'Task-Manager-Portable.html');
+export interface AssemblerOptions {
+  modulesDir?: string;
+  templateStatePath?: string;
+}
 
-export function getCombinedStyles() {
-  const tokens = readFileSync(tokensPath, 'utf-8');
-  const layout = readFileSync(layoutPath, 'utf-8');
-  const components = readFileSync(componentsPath, 'utf-8');
+export function escapeIslandJson(state: TaskManagerState | string): string {
+  const json = typeof state === "string" ? state : JSON.stringify(state, null, 2);
+  return json.replace(/<\/script>/gi, "\\u003c/script\\u003e");
+}
+
+export function escapeScriptContent(js: string): string {
+  return js.replace(/<\/script>/gi, "<\\/script>");
+}
+
+export function getCombinedStyles(modulesDir: string): string {
+  const stylesDir = path.join(modulesDir, "styles");
+  const tokens = fs.readFileSync(path.join(stylesDir, "tokens.css"), "utf-8");
+  const layout = fs.readFileSync(path.join(stylesDir, "layout.css"), "utf-8");
+  const components = fs.readFileSync(path.join(stylesDir, "components.css"), "utf-8");
   return `<style>\n${tokens}\n\n${layout}\n\n${components}\n</style>`;
 }
 
-export function escapeIslandJson(state) {
-  const json = typeof state === 'string' ? state : JSON.stringify(state, null, 2);
-  return json.replace(/<\/script>/gi, '\\u003c/script\\u003e');
-}
+/**
+ * Assembles the full portable HTML cockpit in-memory from modular source files.
+ * Zero reliance on a committed 7,000-line HTML artifact in the repository.
+ */
+export function assembleHtml(
+  customState?: TaskManagerState | null,
+  options: AssemblerOptions = {}
+): string {
+  const modulesDir = options.modulesDir || path.join(defaultProjectRoot, "modules");
+  const templateStatePath =
+    options.templateStatePath ||
+    path.join(defaultProjectRoot, "templates", "default-state.json");
 
-export function escapeScriptContent(js) {
-  return js.replace(/<\/script>/gi, '<\\/script>');
-}
+  const skeletonPath = path.join(modulesDir, "01-skeleton.html");
+  const corePath = path.join(modulesDir, "02-core.js");
+  const hudPath = path.join(modulesDir, "03-header-hud.js");
+  const phasesPath = path.join(modulesDir, "04-phases.js");
+  const panelsPath = path.join(modulesDir, "05-panels.js");
+  const todoHelpPath = path.join(modulesDir, "06-todo-help.js");
 
-export function assembleHtml(customState = null) {
-  const skeleton = readFileSync(skeletonPath, 'utf-8');
-  const coreJs = escapeScriptContent(readFileSync(corePath, 'utf-8'));
-  const hudJs = escapeScriptContent(readFileSync(hudPath, 'utf-8'));
-  const phasesJs = escapeScriptContent(readFileSync(phasesPath, 'utf-8'));
-  const panelsJs = escapeScriptContent(readFileSync(panelsPath, 'utf-8'));
-  const todoHelpJs = escapeScriptContent(readFileSync(todoHelpPath, 'utf-8'));
+  const skeleton = fs.readFileSync(skeletonPath, "utf-8");
+  const coreJs = escapeScriptContent(fs.readFileSync(corePath, "utf-8"));
+  const hudJs = escapeScriptContent(fs.readFileSync(hudPath, "utf-8"));
+  const phasesJs = escapeScriptContent(fs.readFileSync(phasesPath, "utf-8"));
+  const panelsJs = escapeScriptContent(fs.readFileSync(panelsPath, "utf-8"));
+  const todoHelpJs = escapeScriptContent(fs.readFileSync(todoHelpPath, "utf-8"));
 
-  const state = customState || JSON.parse(readFileSync(templateStatePath, 'utf-8'));
-  state.meta = state.meta || {};
+  const state: TaskManagerState =
+    customState || JSON.parse(fs.readFileSync(templateStatePath, "utf-8"));
+  state.meta = state.meta || ({} as any);
   state.meta.lastUpdated = new Date().toISOString();
 
   const islandJson = escapeIslandJson(state);
@@ -52,7 +66,7 @@ export function assembleHtml(customState = null) {
   let html = skeleton;
   const styleRegex = /<style[^>]*>[\s\S]*?<\/style>/;
   if (styleRegex.test(html)) {
-    html = html.replace(styleRegex, () => getCombinedStyles());
+    html = html.replace(styleRegex, () => getCombinedStyles(modulesDir));
   }
 
   const islandRegex = /<script[^>]*id="tm-state"[^>]*>[\s\S]*?<\/script>/;
@@ -133,27 +147,19 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>`;
 
-  if (html.includes('</body>')) {
-    html = html.replace('</body>', () => scriptsBlock);
+  if (html.includes("</body>")) {
+    html = html.replace("</body>", () => scriptsBlock);
   } else {
-    html += scriptsBlock + '\n</html>';
+    html += scriptsBlock + "\n</html>";
   }
 
   const headerComment = `<!--
   Task Manager Portable for Pi — Single-file, file:// compatible, zero runtime deps
-  Generated deterministically by scripts/assemble.mjs
+  Generated dynamically on-demand from modular sources
   Island: script#tm-state (type=application/json) — AI edits ONLY this block
   Tokens: Obsidian Dark theme
 -->
 `;
-  html = html.replace('<!DOCTYPE html>', () => '<!DOCTYPE html>\n' + headerComment);
+  html = html.replace("<!DOCTYPE html>", () => "<!DOCTYPE html>\n" + headerComment);
   return html;
-}
-
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const assembled = assembleHtml();
-  writeFileSync(portablePath, assembled, 'utf-8');
-  const stats = statSync(portablePath);
-  const sizeKB = (stats.size / 1024).toFixed(1);
-  console.log(`✅ Assembled Task-Manager-Portable.html — ${stats.size} bytes (${sizeKB} KB)`);
 }

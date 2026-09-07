@@ -1,0 +1,112 @@
+:root {
+      /* Verbatim tokens from prototype */
+      --bg-canvas: #0b0e14;
+      --bg-surface-primary: #161b22;
+      --bg-surface-secondary: #12161d;
+      --bg-surface-tertiary: #1c222b;
+      --bg-surface-hover: #212833;
+      --border-subtle: #30363d;
+      --border-medium: #424b57;
+      --border-focus: #58a6ff;
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0a0;
+      --text-tertiary: #8b949e;
+      --text-muted: #4b5563;
+      --accent-blue: #58a6ff;
+      --accent-green: #3fb950;
+      --accent-purple: #bc8cff;
+      --accent-amber: #d29922;
+      --accent-red: #f85149;
+      --color-completed: #238636;
+      --color-completed-bright: #3fb950;
+      --color-completed-bg: rgba(63, 185, 80, 0.12);
+      --color-completed-border: #3fb950;
+      --color-inprogress: #1f6feb;
+      --color-inprogress-bright: #58a6ff;
+      --color-inprogress-bg: rgba(88, 166, 255, 0.12);
+      --color-inprogress-border: #58a6ff;
+      --color-pending: #d29922;
+      --color-pending-bright: #d29922;
+      --color-pending-bg: rgba(210, 153, 34, 0.12);
+      --color-pending-border: #d29922;
+      --color-blocked: #da3633;
+      --color-blocked-bright: #f85149;
+      --color-blocked-bg: rgba(248, 81, 73, 0.12);
+      --color-blocked-border: #f85149;
+      --color-git: #8957e5;
+      --color-git-bright: #bc8cff;
+      --color-git-bg: rgba(188, 140, 255, 0.12);
+      --color-git-border: #bc8cff;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 12px;
+      --radius-full: 9999px;
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+
+      /* Extended high-density theme variables */
+      --glow-blue: 0 0 16px rgba(88, 166, 255, 0.2);
+      --glow-green: 0 0 16px rgba(63, 185, 80, 0.2);
+      --glow-amber: 0 0 16px rgba(210, 153, 34, 0.2);
+      --glow-red: 0 0 16px rgba(248, 81, 73, 0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { max-width: 100%; overflow-x: hidden; }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-secondary);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      background-image:
+        radial-gradient(circle at 50% 0%, rgba(31, 111, 235, 0.08) 0%, transparent 60%),
+        linear-gradient(to bottom, rgba(22, 27, 34, 0.4) 1px, transparent 1px),
+        linear-gradient(to right, rgba(22, 27, 34, 0.4) 1px, transparent 1px);
+      background-size: 100% 100%, 32px 32px, 32px 32px;
+      background-position: 0 0, -1px -1px, -1px -1px;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-canvas); }
+    ::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-medium); }
+
+    .app-container {
+      max-width: 1720px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px 24px 72px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .app-container,
+    .view-container,
+    .dashboard-layout,
+    .dashboard-main-col,
+    .dashboard-side-col,
+    .panel-card,
+    .metric-card,
+    .kanban-column { min-width: 0; max-width: 100%; }
+
+    /* Responsive verification matrix: 320×568, 375×812, 390×844, 414×896,
+       768×1024, 1024×768, 1280×720, 1440×1000, 1920×1080.
+       Browser geometry evidence is owned by the Unit 5 file:// harness. */
+    button, input, select, [role="tab"], [data-note-expand], [data-copy-prompt],
+    [data-state-copy], [data-state-export] { min-width: 44px; min-height: 44px; }
+    button:focus-visible, input:focus-visible, select:focus-visible, [role="tab"]:focus-visible,
+    [data-note-expand]:focus-visible, [data-copy-prompt]:focus-visible, [data-state-copy]:focus-visible,
+    [data-state-export]:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+    .panel-card, .phase-card { overflow: visible; }
+    .task-note, .task-title, .task-owner-pill, #filter-result-count { min-width: 0; overflow-wrap: anywhere; }

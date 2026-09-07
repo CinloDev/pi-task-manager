@@ -103,6 +103,47 @@ export interface ProjectMeta {
   }>;
 }
 
+export interface TokenCategories {
+  input: number;
+  output: number;
+  reasoning: number;
+  cacheRead: number;
+  cacheWrite: number;
+  total: number;
+}
+
+export interface AgentTokenUsage {
+  agent: string;
+  model?: string;
+  models?: string[];
+  total: number;
+  cost?: number;
+  sessions?: number;
+  messages?: number;
+  evidence?: "measured" | "derived" | "estimated";
+  confidence?: number;
+  categories: TokenCategories;
+}
+
+export interface TokenUsageState {
+  hasData: boolean;
+  schemaVersion: string;
+  updatedAt: string;
+  source: string;
+  scope?: string;
+  root?: string;
+  totals: {
+    input: number;
+    output: number;
+    reasoning: number;
+    cacheRead: number;
+    cacheWrite: number;
+    total: number;
+    cost?: number;
+  };
+  byAgent: AgentTokenUsage[];
+}
+
 export interface TaskManagerState {
   schemaVersion: string;
   meta: ProjectMeta;
@@ -111,4 +152,5 @@ export interface TaskManagerState {
   git: GitState;
   tree: TreeItem[];
   codegraph: CodeGraph;
+  tokenUsage?: TokenUsageState;
 }

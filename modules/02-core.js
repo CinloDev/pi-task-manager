@@ -58,8 +58,9 @@
    * @returns {boolean}
    */
   function isEnabled(feature, state) {
-    if (!state || !state.meta || !state.meta.features) return false;
-    return state.meta.features[feature] === true;
+    if (!state || !state.meta) return true;
+    if (!state.meta.features) return true;
+    return state.meta.features[feature] !== false;
   }
 
   /**

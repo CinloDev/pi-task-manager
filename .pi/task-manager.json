@@ -1,0 +1,555 @@
+{
+  "schemaVersion": "1.0",
+  "meta": {
+    "projectName": "pi-task-manager",
+    "version": "1.0.0",
+    "branch": "main",
+    "commit": "",
+    "syncStatus": "Sincronizado",
+    "harness": "Pi",
+    "harnessRole": "Coding Agent Harness",
+    "description": "Pi extension and standalone portable HTML dashboard for project task and SDD phase management",
+    "lastUpdated": "2026-09-07T22:46:39.883Z",
+    "labels": {
+      "es": {
+        "overallProgress": "Progreso Global",
+        "filterAll": "Todas",
+        "filterActive": "Activas",
+        "todoTitle": "Tareas Rápidas",
+        "helpTitle": "Ayuda — Cómo usar este archivo",
+        "headerSubtitle": "Dashboard técnico portable — gestionado por Pi y SDD"
+      }
+    },
+    "features": {
+      "git": true,
+      "tree": true,
+      "codegraph": true,
+      "help": true
+    },
+    "history": [
+      {
+        "timestamp": "2026-09-07T18:50:57.376Z",
+        "completed": 2,
+        "total": 8
+      }
+    ]
+  },
+  "phases": [
+    {
+      "id": "phase-1",
+      "number": 1,
+      "title": "pi-task-manager — Arquitectura & Setup",
+      "status": "completed",
+      "target": "Fase 1",
+      "lead": "Orquestador",
+      "tasks": [
+        {
+          "id": "T1-01",
+          "title": "Configurar entorno y base de pi-task-manager",
+          "status": "completed",
+          "tag": "Setup",
+          "owner": "Pi"
+        }
+      ]
+    },
+    {
+      "id": "phase-2",
+      "number": 2,
+      "title": "pi-task-manager — Desarrollo Core",
+      "status": "in_progress",
+      "target": "Fase 2",
+      "lead": "sdd-apply",
+      "tasks": [
+        {
+          "id": "T2-01",
+          "title": "Implementar funcionalidades prioritarias",
+          "status": "in_progress",
+          "tag": "Core",
+          "owner": "sdd-apply"
+        }
+      ]
+    },
+    {
+      "id": "phase-3",
+      "number": 3,
+      "title": "pi-task-manager — Testing y Verificación",
+      "status": "pending",
+      "target": "Fase 3",
+      "lead": "sdd-verify",
+      "tasks": [
+        {
+          "id": "T3-01",
+          "title": "Verificar cobertura de pruebas y calidad",
+          "status": "pending",
+          "tag": "QA",
+          "owner": "sdd-verify"
+        }
+      ]
+    }
+  ],
+  "todos": [
+    {
+      "id": "td-1",
+      "text": "Completar la especificación inicial con /sdd-init",
+      "priority": "P0",
+      "done": false
+    },
+    {
+      "id": "td-2",
+      "text": "Sincronizar tareas con /task-manager sync",
+      "priority": "P1",
+      "done": false
+    },
+    {
+      "id": "td-3",
+      "text": "Revisar cobertura de tests con vitest",
+      "priority": "P2",
+      "done": true
+    },
+    {
+      "id": "td-mtrqynkb",
+      "text": "Nueva tarea de prueba",
+      "priority": "P1",
+      "done": false
+    },
+    {
+      "id": "td-mtrt8vvn",
+      "text": "2da tareas de prueba",
+      "priority": "P3",
+      "done": true
+    }
+  ],
+  "git": {
+    "branch": "main",
+    "commits": [
+      {
+        "hash": "87b495e",
+        "message": "fix: restrict task scanning strictly to explicit task files and OpenSpec to avoid scraping general markdown docs",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "8e3b809",
+        "message": "style: restore pure Obsidian dark design tokens across select, dialogs, and chevrons",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "f0ed746",
+        "message": "style: redesign overview detail modal with harmonious proportions, badges, and close button",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "674e0fa",
+        "message": "style: enhance spacing and typography in telemetry insight card and translate dimensions",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "3cd07b4",
+        "message": "feat: custom styled dropdown select component replacing native browser selects",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "a28bb16",
+        "message": "style: bold typography scale-up across Kanban cards, phase headings, and metadata",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "cac262c",
+        "message": "style: scale up typography across entire dashboard for enhanced readability",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "b42a468",
+        "message": "style: expand section gap to 32px, add glowing toggle buttons, and card margins",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "57c78ad",
+        "message": "style: increase layout and card gaps, fix overview heading flexbox, style chevron buttons",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      },
+      {
+        "hash": "b163c79",
+        "message": "feat: default phases and tasks to collapsed/closed state with toggle on demand",
+        "author": "CinloDev",
+        "date": "2026-09-07"
+      }
+    ],
+    "syncStatus": "Cambios locales pendientes"
+  },
+  "tree": [
+    {
+      "name": "agents/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "task-tracker-manager.md",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "modules/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "styles/",
+      "depth": 1,
+      "type": "dir"
+    },
+    {
+      "name": "components.css",
+      "depth": 2,
+      "type": "file"
+    },
+    {
+      "name": "layout.css",
+      "depth": 2,
+      "type": "file"
+    },
+    {
+      "name": "tokens.css",
+      "depth": 2,
+      "type": "file"
+    },
+    {
+      "name": "01-skeleton.html",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "02-core.js",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "03-header-hud.js",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "04-phases.js",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "05-panels.js",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "06-todo-help.js",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "07-assemble.md",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "scripts/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "assemble.mjs",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "skills/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "task-manager/",
+      "depth": 1,
+      "type": "dir"
+    },
+    {
+      "name": "SKILL.md",
+      "depth": 2,
+      "type": "file"
+    },
+    {
+      "name": "src/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "assembler.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "island.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "manager.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "scanner.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "telemetry.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "types.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "ui.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "templates/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "default-state.json",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "test/",
+      "depth": 0,
+      "type": "dir"
+    },
+    {
+      "name": "index.test.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "island.test.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "manager.test.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "scanner.test.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "telemetry.test.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": "ui.test.ts",
+      "depth": 1,
+      "type": "file"
+    },
+    {
+      "name": ".gitignore",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "index.ts",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "LICENSE",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "package.json",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "pnpm-lock.yaml",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "pnpm-workspace.yaml",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "README.md",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "tsconfig.json",
+      "depth": 0,
+      "type": "file"
+    },
+    {
+      "name": "vitest.config.ts",
+      "depth": 0,
+      "type": "file"
+    }
+  ],
+  "codegraph": {
+    "nodes": [
+      {
+        "id": "test-suite",
+        "label": "Suite de Pruebas",
+        "files": [
+          "test"
+        ],
+        "details": "Pruebas automatizadas unitarias y de integración",
+        "taskIds": []
+      },
+      {
+        "id": "mod-agents",
+        "label": "AGENTS",
+        "files": [
+          "agents"
+        ],
+        "details": "Directorio del proyecto: agents",
+        "taskIds": []
+      },
+      {
+        "id": "mod-modules",
+        "label": "MODULES",
+        "files": [
+          "modules"
+        ],
+        "details": "Directorio del proyecto: modules",
+        "taskIds": []
+      },
+      {
+        "id": "mod-scripts",
+        "label": "SCRIPTS",
+        "files": [
+          "scripts"
+        ],
+        "details": "Directorio del proyecto: scripts",
+        "taskIds": []
+      },
+      {
+        "id": "mod-skills",
+        "label": "SKILLS",
+        "files": [
+          "skills"
+        ],
+        "details": "Directorio del proyecto: skills",
+        "taskIds": []
+      },
+      {
+        "id": "mod-src",
+        "label": "SRC",
+        "files": [
+          "src"
+        ],
+        "details": "Directorio del proyecto: src",
+        "taskIds": []
+      },
+      {
+        "id": "mod-templates",
+        "label": "TEMPLATES",
+        "files": [
+          "templates"
+        ],
+        "details": "Directorio del proyecto: templates",
+        "taskIds": []
+      }
+    ],
+    "edges": [
+      {
+        "from": "test-suite",
+        "to": "mod-agents",
+        "label": "conecta"
+      },
+      {
+        "from": "mod-agents",
+        "to": "mod-modules",
+        "label": "conecta"
+      },
+      {
+        "from": "mod-modules",
+        "to": "mod-scripts",
+        "label": "conecta"
+      },
+      {
+        "from": "mod-scripts",
+        "to": "mod-skills",
+        "label": "conecta"
+      },
+      {
+        "from": "mod-skills",
+        "to": "mod-src",
+        "label": "conecta"
+      },
+      {
+        "from": "mod-src",
+        "to": "mod-templates",
+        "label": "conecta"
+      }
+    ]
+  },
+  "tokenUsage": {
+    "hasData": true,
+    "schemaVersion": "1.0",
+    "updatedAt": "2026-09-07T22:46:39.883Z",
+    "source": "pi-runtime",
+    "scope": "pi-task-manager",
+    "root": "",
+    "totals": {
+      "input": 4354942,
+      "output": 52993,
+      "reasoning": 26436,
+      "cacheRead": 51700117,
+      "cacheWrite": 0,
+      "total": 56108052,
+      "cost": 0
+    },
+    "byAgent": [
+      {
+        "agent": "sdd-apply",
+        "model": "cinlo/gemini-3.8-flash-high",
+        "models": [
+          "ranchesca/gemini-3.8-flash-high",
+          "cinlo/gemini-3.8-flash-high"
+        ],
+        "total": 56108052,
+        "cost": 0,
+        "messages": 142,
+        "sessions": 1,
+        "evidence": "measured",
+        "confidence": 1,
+        "categories": {
+          "input": 4354942,
+          "output": 52993,
+          "reasoning": 26436,
+          "cacheRead": 51700117,
+          "cacheWrite": 0,
+          "total": 56108052
+        }
+      }
+    ]
+  }
+}

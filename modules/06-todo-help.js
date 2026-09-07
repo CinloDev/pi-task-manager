@@ -298,21 +298,20 @@
   }
 
   function getMasterPrompt() {
-    return 'Usa la skill task-tracker-manager.\\\\n\\\\n'
-      + 'Eres Agent Task Manager, la autoridad de ejecución directa para mantener y sincronizar el panel HTML portable en ./Task-Manager-Portable.html (o ./drop-in-task-manager.html si ya existe en el proyecto). Ejecuta todas las mutaciones de forma directa y autónoma sin transferir tareas. NUNCA crees un archivo HTML nuevo con otro nombre.\\\\n\\\\n'
-      + 'NOTA DE SINCRONIZACIÓN EN SEGUNDO PLANO (RECUPERACIÓN / REFERENCIA):\\\\n'
-      + 'Este prompt sirve como referencia técnica o recuperación manual. La sincronización habitual opera en segundo plano de manera continua: se inicializa en la primera apertura (Plugins > Task Manager) y se refresca automáticamente en posteriores aperturas y durante hitos clave del flujo SDD (sdd-tasks, sdd-verify, sdd-archive). No es necesario copiar y pegar este prompt en condiciones normales.\\\\n\\\\n'
+    return 'Usa la skill task-manager.\\\\n\\\\n'
+      + 'Eres Agent Task Manager, la autoridad responsable de mantener y sincronizar el estado técnico en .pi/task-manager.json con evidencia real del workspace (Git commits, PRs, OpenSpec y tareas).\\n\\n'
+      + 'HERRAMIENTAS NATIVAS DE PI (Recomendado):\\\\n'
+      + '1. task_manager_read: Inspecciona tareas, fases y progreso directamente.\\\\n'
+      + '2. task_manager_update_task: Actualiza el estado de una tarea (taskId, status, note, commit, owner, blockedReason).\\\\n'
+      + '3. task_manager_sync: Sincroniza git commits y tareas markdown automáticamente.\\\\n\\\\n'
       + 'REGLAS TÉCNICAS OBLIGATORIAS:\\\\n'
-      + '1. Edita ÚNICAMENTE el bloque \\\\x3cscript type=\\"application/json\\" id=\\"tm-state\\">. NUNCA modifiques marcado HTML, estilos CSS ni scripts JavaScript fuera de esa etiqueta.\\\\n'
+      + '1. El repositorio guarda ÚNICAMENTE el estado liviano en .pi/task-manager.json (~3 KB). Cero archivos HTML en el repo.\\\\n'
       + '2. Mantén schemaVersion: \\"1.0\\" intacto siempre.\\\\n'
-      + '3. Escapa cualquier ocurrencia de </script> dentro de strings JSON como \\\\u003c/script\\\\u003e.\\\\n'
-      + '4. Usa exclusivamente los estados válidos: \\"pending\\", \\"in-progress\\", \\"completed\\", \\"blocked\\" (estados desconocidos se mapean a \\"pending\\").\\\\n'
-      + '5. Soporta sub-tareas estructuradas en tareas con: \\"subtasks\\": [{\\"id\\": \\"ST1\\", \\"title\\": \\"...\\", \\"status\\": \\"pending\\"|\\"in-progress\\"|\\"completed\\"|\\"blocked\\"}].\\\\n'
-      + '6. Preserva IDs existentes, notas personalizadas del usuario, etiquetas y propietarios. Todas las actualizaciones deben ser aditivas y orientadas al estado.\\\\n'
-      + '7. Compatibilidad pura offline sobre file://: sin fetch, XMLHttpRequest, importaciones ESM ni dependencias externas en runtime.\\\\n'
-      + '8. No hardcodees métricas derivadas (como overallPct o conteos de estado), ya que se calculan dinámicamente en el renderizador.\\\\n'
-      + '9. La propiedad \\"tokenUsage\\" es telemetría gestionada por el host. PRESERVA el objeto tokenUsage intacto; NUNCA inventes, estimes ni sobrescribas tokenUsage.\\\\n\\\\n'
-      + 'Al finalizar, guarda el archivo con el JSON island actualizado de forma atómica y reporta un resumen conciso del estado de fases y tareas.';
+      + '3. Usa exclusivamente los estados válidos: \\"pending\\", \\"in_progress\\", \\"completed\\", \\"blocked\\".\\\\n'
+      + '4. Soporta subtareas estructuradas con: \\"subtasks\\": [{\\"id\\": \\"ST1\\", \\"title\\": \\"...\\", \\"status\\": \\"completed\\", \\"done\\": true}].\\\\n'
+      + '5. Preserva IDs existentes, notas personalizadas del usuario, etiquetas y propietarios.\\\\n'
+      + '6. Para abrir o compartir el dashboard visual, usa /task-manager open (efímero en navegador) o /task-manager export.\\\\n\\\\n'
+      + 'Al finalizar, reporta un resumen conciso del estado de fases y tareas.';
   }
 
   function renderHelp(state, doc, validation) {
@@ -332,66 +331,66 @@
     panel.removeAttribute('hidden');
 
     var todoTitle = label('todoTitle', state, 'Tareas Rápidas');
-    var helpTitle = label('helpTitle', state, 'Ayuda — Cómo usar este archivo');
+    var helpTitle = label('helpTitle', state, 'Ayuda & Consola IA');
     var filterAll = label('filterAll', state, 'Todas');
     var filterActive = label('filterActive', state, 'Activas');
 
     var helpHtml = ''
       + '<h3 style=\"color:#fff;margin-bottom:8px;\">' + esc(helpTitle) + '</h3>'
-      + '<p style=\"font-size:13px;color:#a0a0a0;margin-bottom:8px;\">Este es un archivo HTML <strong>drop-in</strong>. Cópialo a cualquier carpeta de proyecto y ábrelo con doble clic (<code style=\"background:#12161d;padding:2px 6px;border-radius:4px;\">file://</code>). No necesita servidor ni instalación.</p>'
-      + '<div style=\"background:#12161d;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:12px;\">'
-      + '<h4 style=\"color:#fff;font-size:13px;margin-bottom:6px;\">📋 Cómo copiar</h4>'
-      + '<ol style=\"font-size:13px;color:#a0a0a0;padding-left:18px;display:flex;flex-direction:column;gap:4px;\">'
-      + '<li>Copia <code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;\">Task-Manager-Portable.html</code> a la raíz del proyecto</li>'
-      + '<li>Doble clic para abrir en el navegador (file://)</li>'
-      + '<li>Verás fases, tareas, progreso y paneles opcionales</li>'
-      + '</ol>'
-      + '</div>'
-
-      + '<div style=\"background:#12161d;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:12px;\">'
-      + '<h4 style=\"color:#fff;font-size:13px;margin-bottom:6px;\">🤖 Cómo la IA actualiza</h4>'
-      + '<p style=\"font-size:13px;color:#a0a0a0;margin-bottom:6px;\">La IA orquestadora actualiza <strong>SOLO</strong> el bloque <code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;\">#tm-state</code> en JSON. Todo lo visual se recalcula desde ahí.</p>'
-      + '<ul style=\"font-size:13px;color:#a0a0a0;padding-left:18px;display:flex;flex-direction:column;gap:4px;\">'
-      + '<li>Asigna una IA: &quot;actualiza el task manager según avances en el proyecto&quot;</li>'
-      + '<li>La IA edita solo el JSON island y guarda el HTML</li>'
-      + '<li>Recarga el archivo en el navegador para ver progreso</li>'
-      + '<li>Esquema: <code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;\">meta</code> + <code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;\">phases[]</code> + <code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;\">todos[]</code> + <code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;\">git/tree/codegraph</code></li>'
+      + '<p style=\"font-size:13.5px;color:#a0a0a0;margin-bottom:14px;line-height:1.5;\">Gestor técnico de tareas y fases SDD integrado con <strong>Pi</strong>. El estado se almacena de forma limpia y compacta en <code style=\"background:#12161d;padding:2px 6px;border-radius:4px;color:var(--accent-blue);\">.pi/task-manager.json</code> (~3 KB), manteniendo el repositorio libre de archivos HTML innecesarios.</p>'
+      + '<div style=\"background:#12161d;border:1px solid #30363d;border-radius:8px;padding:14px;margin-bottom:12px;\">'
+      + '<h4 style=\"color:#fff;font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:6px;\">🚀 Comandos Principales en Pi</h4>'
+      + '<ul style=\"font-size:13px;color:#a0a0a0;padding-left:18px;display:flex;flex-direction:column;gap:6px;\">'
+      + '<li><code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;color:#fff;\">/task-manager open</code> (o atajo <kbd style=\"background:#1c222b;padding:1px 5px;border-radius:3px;font-family:var(--font-mono);\">alt+t</kbd>): Abre el dashboard interactivo en tu navegador predeterminado (renderizado al vuelo en temp sin ensuciar el repo).</li>'
+      + '<li><code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;color:#fff;\">/task-manager sync</code>: Sincroniza ramas git, árbol de archivos y tareas desde <code>tasks.md</code> o OpenSpec.</li>'
+      + '<li><code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;color:#fff;\">/task-manager status</code> y <code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;color:#fff;\">/task-manager list</code>: Muestra resúmenes y checklists detallados en la terminal.</li>'
+      + '<li><code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;color:#fff;\">/task-manager export [ruta]</code>: Exporta una copia HTML portable bajo demanda para compartir o publicar estático.</li>'
       + '</ul>'
       + '</div>'
 
-      + '<div style=\"background:#12161d;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:12px;\">'
-      + '<h4 style=\"color:#fff;font-size:13px;margin-bottom:6px;\">📐 Esquema</h4>'
-      + '<pre style=\"font-family:var(--font-mono);font-size:11px;color:#a0a0a0;overflow-x:auto;background:#0b0e14;padding:8px;border-radius:4px;\">{'
-      + '\\n  &quot;schemaVersion&quot;: &quot;1.0&quot;,'
-      + '\\n  &quot;meta&quot;: { &quot;projectName&quot;, &quot;version&quot;, &quot;branch&quot;, &quot;labels&quot;: {&quot;es&quot;:{}}, &quot;features&quot;: {&quot;git&quot;, &quot;tree&quot;, &quot;codegraph&quot;} },'
-      + '\\n  &quot;phases&quot;: [{ &quot;id&quot;, &quot;title&quot;, &quot;status&quot;, &quot;tasks&quot;: [{&quot;id&quot;, &quot;title&quot;, &quot;status&quot;}] }],'
-      + '\\n  &quot;todos&quot;: [{&quot;id&quot;, &quot;text&quot;, &quot;priority&quot;, &quot;done&quot;}],'
-      + '\\n  &quot;git&quot;, &quot;tree&quot;, &quot;codegraph&quot;'
-      + '\\n}</pre>'
-      + '</div>'
-
-      + '<div id=\"ai-instructions\" style=\"background:rgba(88,166,255,0.08);border:1px solid #58a6ff;border-radius:8px;padding:12px;\">'
-      + '<h4 style=\"color:#58a6ff;font-size:13px;margin-bottom:6px;\">🧠 Instrucciones para IA Orquestadora (AI-EDITABLE)</h4>'
-      + '<ul style=\"font-size:12px;color:#a0a0a0;padding-left:18px;display:flex;flex-direction:column;gap:4px;\">'
-      + '<li><strong>SOLO</strong> edita el bloque <code style=\"background:#1c222b;padding:1px 4px;border-radius:3px;\">&lt;script type=&quot;application/json&quot; id=&quot;tm-state&quot;&gt;</code> — nunca toques el HTML fuera del island</li>'
-      + '<li>Mantén <code>schemaVersion</code> como <code>&quot;1.0&quot;</code> siempre</li>'
-      + '<li>Escapa <code>&lt;/script&gt;</code> como <code>\\\\u003c/script\\\\u003e</code> dentro de cualquier texto de tarea/nota para no romper el HTML</li>'
-      + '<li>Usa <code>status</code> solo con: <code>pending</code>, <code>in-progress</code>, <code>completed</code>, <code>blocked</code> — desconocidos se mapean a <code>pending</code></li>'
-      + '<li>No hagas <code>fetch</code>, <code>XML' + 'HttpRequest</code>, <code>import</code> ni leas <code>.git</code> en runtime — todo es estático</li>'
-      + '<li>Ejemplo válido: <code style=\"background:#1c222b;padding:1px 4px;border-radius:3px;\">{&quot;id&quot;:&quot;T1-01&quot;,&quot;title&quot;:&quot;Definir esquema&quot;,&quot;status&quot;:&quot;completed&quot;}</code></li>'
+      + '<div style=\"background:#12161d;border:1px solid #30363d;border-radius:8px;padding:14px;margin-bottom:12px;\">'
+      + '<h4 style=\"color:#fff;font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:6px;\">🤖 Cómo la IA actualiza el estado</h4>'
+      + '<p style=\"font-size:13px;color:#a0a0a0;margin-bottom:8px;\">La IA orquestadora y los subagentes operan directamente mediante <strong>Tools Nativas de Pi</strong> o actualizando el JSON de estado:</p>'
+      + '<ul style=\"font-size:13px;color:#a0a0a0;padding-left:18px;display:flex;flex-direction:column;gap:6px;\">'
+      + '<li><code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;color:#58a6ff;\">task_manager_read</code>: Lee fases, tareas, métricas y git en tiempo real.</li>'
+      + '<li><code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;color:#58a6ff;\">task_manager_update_task</code>: Cambia estado (<code>in_progress</code>, <code>completed</code>, <code>blocked</code>), agrega notas técnicas o vincula commits.</li>'
+      + '<li><code style=\"background:#1c222b;padding:2px 6px;border-radius:4px;color:#58a6ff;\">task_manager_sync</code>: Reconcilia automáticamente las tareas con los archivos markdown del proyecto.</li>'
       + '</ul>'
-      + '<p style=\"font-size:11px;color:#8b949e;margin-top:8px;\">Filtros: ' + esc(filterAll) + ' / ' + esc(filterActive) + ' · Todo: ' + esc(todoTitle) + ' · Código en inglés, UI en español vía <code>meta.labels.es</code></p>'
       + '</div>'
 
-      + '<div id=\"prompt-inicial\" style=\"background:#12161d;border:1px solid #3fb950;border-radius:8px;padding:12px;margin-top:12px;\">'
-      + '<h4 style=\"color:#3fb950;font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:6px;\">📋 Prompt para Agent Task Manager (Recuperación / Manual)</h4>'
-      + '<p style=\"font-size:12px;color:#8b949e;margin-bottom:8px;\">La sincronización normal es automática desde Plugins > Task Manager y durante hitos soportados. Si necesitas sincronizar manualmente, copia este prompt:</p>'
+      + '<div style=\"background:#12161d;border:1px solid #30363d;border-radius:8px;padding:14px;margin-bottom:12px;\">'
+      + '<h4 style=\"color:#fff;font-size:14px;margin-bottom:8px;\">📐 Esquema (.pi/task-manager.json)</h4>'
+      + '<pre style=\"font-family:var(--font-mono);font-size:11.5px;color:#a0a0a0;overflow-x:auto;background:#0b0e14;padding:10px;border-radius:6px;border:1px solid #30363d;\">{\\n'
+      + '  &quot;schemaVersion&quot;: &quot;1.0&quot;,\\n'
+      + '  &quot;meta&quot;: { &quot;projectName&quot;, &quot;version&quot;, &quot;branch&quot;, &quot;features&quot;: {&quot;git&quot;:true, &quot;tree&quot;:true, &quot;codegraph&quot;:true} },\\n'
+      + '  &quot;phases&quot;: [{ &quot;id&quot;: &quot;phase-1&quot;, &quot;title&quot;: &quot;...&quot;, &quot;status&quot;: &quot;completed&quot;, &quot;tasks&quot;: [...] }],\\n'
+      + '  &quot;todos&quot;: [{ &quot;id&quot;: &quot;td-1&quot;, &quot;text&quot;: &quot;...&quot;, &quot;priority&quot;: &quot;P1&quot;, &quot;done&quot;: false }],\\n'
+      + '  &quot;git&quot;: { &quot;branch&quot;, &quot;commits&quot;, &quot;syncStatus&quot; },\\n'
+      + '  &quot;tree&quot;: [...],\\n'
+      + '  &quot;codegraph&quot;: { &quot;nodes&quot;: [...], &quot;edges&quot;: [...] }\\n'
+      + '}</pre>'
+      + '</div>'
+
+      + '<div id=\"ai-instructions\" style=\"background:rgba(88,166,255,0.06);border:1px solid #58a6ff;border-radius:8px;padding:14px;\">'
+      + '<h4 style=\"color:#58a6ff;font-size:14px;margin-bottom:8px;\">🧠 Instrucciones para IA Orquestadora & Subagentes</h4>'
+      + '<ul style=\"font-size:12.5px;color:#a0a0a0;padding-left:18px;display:flex;flex-direction:column;gap:5px;\">'
+      + '<li>Usa preferentemente las herramientas nativas de Pi (<code>task_manager_read</code>, <code>task_manager_update_task</code>).</li>'
+      + '<li>Si editas directamente en disco, modifica únicamente <code>.pi/task-manager.json</code> — nunca crees archivos HTML en los repositorios.</li>'
+      + '<li>Mantén <code>schemaVersion: &quot;1.0&quot;</code> siempre.</li>'
+      + '<li>Usa exclusivamente los estados válidos: <code>pending</code>, <code>in_progress</code>, <code>completed</code>, <code>blocked</code>.</li>'
+      + '<li>Preserva notas de usuario, sub-tareas y dependencias al actualizar fases.</li>'
+      + '</ul>'
+      + '</div>'
+
+      + '<div id=\"prompt-inicial\" style=\"background:#12161d;border:1px solid #3fb950;border-radius:8px;padding:14px;margin-top:12px;\">'
+      + '<h4 style=\"color:#3fb950;font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:6px;\">📋 Prompt para Agent Task Manager (Referencia / Manual)</h4>'
+      + '<p style=\"font-size:12.5px;color:#8b949e;margin-bottom:8px;\">La sincronización opera automáticamente en segundo plano con las tools de Pi. Si necesitas darle instrucciones directas a un agente, puedes copiar este prompt:</p>'
       + '<pre id=\"initial-prompt-text\" data-help-prompt style=\"font-family:var(--font-mono);font-size:11px;color:#c9d1d9;background:#0b0e14;padding:10px;border-radius:6px;overflow-x:auto;white-space:pre-wrap;word-break:break-word;border:1px solid #30363d;line-height:1.5;max-height:280px;overflow-y:auto;\">' + esc(getMasterPrompt()) + '</pre>'
       + '<button id=\"btn-copy-prompt\" data-copy-prompt type=\"button\" style=\"margin-top:8px;background:#238636;border:1px solid #3fb950;color:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:6px;\">📋 Copiar prompt</button>'
       + '<span id=\"copy-feedback\" data-copy-prompt-feedback role=\"status\" aria-live=\"polite\" style=\"margin-left:8px;font-size:12px;color:#3fb950;display:none;\"></span>'
       + '</div>'
 
-      + '<aside class=\"help-portability-note\" aria-label=\"Portabilidad y documentación\"><span class=\"help-portability-icon\">i</span><div><strong>Referencia técnica local</strong><p>Documentación: <code>openspec/changes/drop-in-task-manager/</code></p><div class=\"help-portability-tags\"><span>Tokens del prototipo</span><span><code>file://</code> compatible</span><span>Sin dependencias externas</span></div></div></aside>';
+      + '<aside class=\"help-portability-note\" aria-label=\"Portabilidad y documentación\"><span class=\"help-portability-icon\">i</span><div><strong>Arquitectura desacoplada</strong><p>Estado en <code>.pi/task-manager.json</code> · Dashboard servido efímeramente o exportable a HTML autónomo</p><div class=\"help-portability-tags\"><span>Estado limpio JSON</span><span>Tools de Pi</span><span>Cero dependencias</span></div></div></aside>';
 
     panel.innerHTML = helpHtml + '<div id=\"state-inspection-mount\"></div>';
     renderStateTools(state, doc, validation, 'state-inspection-mount');

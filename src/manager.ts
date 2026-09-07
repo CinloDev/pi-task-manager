@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { exec, execFile, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import type { TaskManagerState, TaskStatus, Task, TodoItem } from "./types.js";
@@ -10,6 +11,8 @@ import {
   validateState,
 } from "./island.js";
 import { scanWorkspace } from "./scanner.js";
+import { assembleHtml } from "./assembler.js";
+import { recordTokenUsage, type RecordTokenUsageParams } from "./telemetry.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +21,7 @@ export interface TaskManagerOptions {
   workspaceRoot?: string;
   targetFilename?: string;
   templatePath?: string;
+  modulesDir?: string;
 }
 
 export interface TaskUpdateInput {
@@ -36,39 +40,68 @@ export interface TodoCreateInput {
 
 export class TaskManager {
   readonly workspaceRoot: string;
-  readonly targetFilePath: string;
+  readonly stateFilePath: string;
+  readonly legacyHtmlPath: string;
   readonly templatePath: string;
+  readonly modulesDir: string;
 
   constructor(options: TaskManagerOptions = {}) {
     this.workspaceRoot = path.resolve(options.workspaceRoot || process.cwd());
-    const targetName = options.targetFilename || "Task-Manager-Portable.html";
-    this.targetFilePath = path.join(this.workspaceRoot, targetName);
+    const defaultStateRel = path.join(".pi", "task-manager.json");
+    const targetName = options.targetFilename || defaultStateRel;
+
+    this.stateFilePath = path.isAbsolute(targetName)
+      ? targetName
+      : path.join(this.workspaceRoot, targetName);
+
+    this.legacyHtmlPath = path.join(this.workspaceRoot, "Task-Manager-Portable.html");
 
     this.templatePath =
       options.templatePath ||
       path.resolve(__dirname, "..", "Task-Manager-Portable.html");
+
+    this.modulesDir =
+      options.modulesDir ||
+      path.resolve(__dirname, "..", "modules");
   }
 
   /**
-   * Checks if the Task-Manager-Portable.html exists in the target workspace.
+   * Backwards compatible alias for the primary state file path.
+   */
+  get targetFilePath(): string {
+    return this.stateFilePath;
+  }
+
+  /**
+   * Checks if Task Manager state exists (either .pi/task-manager.json or legacy HTML).
    */
   exists(): boolean {
-    return fs.existsSync(this.targetFilePath);
+    return fs.existsSync(this.stateFilePath) || fs.existsSync(this.legacyHtmlPath);
   }
 
   /**
-   * Reads raw HTML and parses the #tm-state.
+   * Reads state from .pi/task-manager.json, or falls back to legacy HTML if present.
    */
   getState(): TaskManagerState {
-    if (!this.exists()) {
-      throw new Error(`Task Manager HTML not found at: ${this.targetFilePath}`);
+    if (fs.existsSync(this.stateFilePath)) {
+      if (this.stateFilePath.endsWith(".html")) {
+        const html = fs.readFileSync(this.stateFilePath, "utf-8");
+        return parseIslandState(html);
+      }
+      const raw = fs.readFileSync(this.stateFilePath, "utf-8");
+      return JSON.parse(raw);
     }
-    const html = fs.readFileSync(this.targetFilePath, "utf-8");
-    return parseIslandState(html);
+
+    if (fs.existsSync(this.legacyHtmlPath)) {
+      const html = fs.readFileSync(this.legacyHtmlPath, "utf-8");
+      return parseIslandState(html);
+    }
+
+    throw new Error(`Task Manager state not found at: ${this.stateFilePath}`);
   }
 
   /**
-   * Validates and saves updated state atomically into the target HTML file.
+   * Validates and saves updated state atomically into the target state JSON file.
    */
   saveState(state: TaskManagerState): { success: boolean; message: string } {
     const valid = validateState(state);
@@ -79,23 +112,36 @@ export class TaskManager {
       };
     }
 
-    if (!this.exists()) {
-      return {
-        success: false,
-        message: `Target file does not exist: ${this.targetFilePath}`,
-      };
-    }
-
     state.meta.lastUpdated = new Date().toISOString();
 
-    const currentHtml = fs.readFileSync(this.targetFilePath, "utf-8");
-    const updatedHtml = injectIslandState(currentHtml, state);
+    const parentDir = path.dirname(this.stateFilePath);
+    if (!fs.existsSync(parentDir)) {
+      fs.mkdirSync(parentDir, { recursive: true });
+    }
 
     // Atomic write via temp file
-    const tempPath = `${this.targetFilePath}.${Date.now()}.tmp`;
+    const tempPath = `${this.stateFilePath}.${Date.now()}.tmp`;
     try {
-      fs.writeFileSync(tempPath, updatedHtml, "utf-8");
-      fs.renameSync(tempPath, this.targetFilePath);
+      if (this.stateFilePath.endsWith(".html")) {
+        const currentHtml = fs.existsSync(this.stateFilePath)
+          ? fs.readFileSync(this.stateFilePath, "utf-8")
+          : fs.readFileSync(this.templatePath, "utf-8");
+        const updatedHtml = injectIslandState(currentHtml, state);
+        fs.writeFileSync(tempPath, updatedHtml, "utf-8");
+      } else {
+        fs.writeFileSync(tempPath, JSON.stringify(state, null, 2), "utf-8");
+      }
+      fs.renameSync(tempPath, this.stateFilePath);
+
+      // Keep legacy HTML synchronized if it exists in the workspace
+      if (!this.stateFilePath.endsWith(".html") && fs.existsSync(this.legacyHtmlPath)) {
+        try {
+          const currentHtml = fs.readFileSync(this.legacyHtmlPath, "utf-8");
+          const updatedHtml = injectIslandState(currentHtml, state);
+          fs.writeFileSync(this.legacyHtmlPath, updatedHtml, "utf-8");
+        } catch {}
+      }
+
       return {
         success: true,
         message: "Task Manager state saved successfully.",
@@ -112,21 +158,15 @@ export class TaskManager {
   }
 
   /**
-   * Initializes Task-Manager-Portable.html in workspace from template and current workspace scan.
+   * Initializes Task Manager state (.pi/task-manager.json) from current workspace scan.
+   * Does NOT clutter the workspace with 7,000-line HTML files.
    */
   init(options: { force?: boolean } = {}): { success: boolean; message: string } {
     if (this.exists() && !options.force) {
       return {
         success: true,
-        message: `Task Manager already exists at: ${this.targetFilePath}`,
+        message: `Task Manager already exists at: ${this.stateFilePath}`,
       };
-    }
-
-    let baseHtml = "";
-    if (fs.existsSync(this.templatePath)) {
-      baseHtml = fs.readFileSync(this.templatePath, "utf-8");
-    } else {
-      throw new Error(`Template not found at: ${this.templatePath}`);
     }
 
     // Scan workspace
@@ -204,12 +244,21 @@ export class TaskManager {
       ];
     }
 
-    const htmlWithState = injectIslandState(baseHtml, initialState);
-    fs.writeFileSync(this.targetFilePath, htmlWithState, "utf-8");
+    const parentDir = path.dirname(this.stateFilePath);
+    if (!fs.existsSync(parentDir)) {
+      fs.mkdirSync(parentDir, { recursive: true });
+    }
+
+    if (this.stateFilePath.endsWith(".html")) {
+      const htmlWithState = assembleHtml(initialState, { modulesDir: this.modulesDir });
+      fs.writeFileSync(this.stateFilePath, htmlWithState, "utf-8");
+    } else {
+      fs.writeFileSync(this.stateFilePath, JSON.stringify(initialState, null, 2), "utf-8");
+    }
 
     return {
       success: true,
-      message: `Task Manager initialized at ${this.targetFilePath}`,
+      message: `Task Manager initialized at ${this.stateFilePath}`,
     };
   }
 
@@ -296,21 +345,32 @@ export class TaskManager {
 
   /**
    * Adds a quick todo item.
+   * If priority is not explicitly provided, auto-assigns the next available priority
+   * (P0, P1, P2, P3) based on existing todos.
    */
   addTodo(input: TodoCreateInput): { success: boolean; message: string; todo?: TodoItem } {
     const state = this.getState();
     const id = `td-${Date.now().toString(36)}`;
+
+    let assignedPriority: "P0" | "P1" | "P2" | "P3" = input.priority || "P1";
+    if (!input.priority) {
+      const existingPriorities = new Set(state.todos.map((t) => t.priority));
+      const priorityOrder: ("P0" | "P1" | "P2" | "P3")[] = ["P0", "P1", "P2", "P3"];
+      const nextAvailable = priorityOrder.find((p) => !existingPriorities.has(p));
+      assignedPriority = nextAvailable || "P3";
+    }
+
     const newTodo: TodoItem = {
       id,
       text: input.text,
-      priority: input.priority || "P1",
+      priority: assignedPriority,
       done: false,
     };
     state.todos.push(newTodo);
     const saveRes = this.saveState(state);
     return {
       success: saveRes.success,
-      message: saveRes.success ? `Todo added: "${input.text}"` : saveRes.message,
+      message: saveRes.success ? `Todo added [${assignedPriority}]: "${input.text}"` : saveRes.message,
       todo: newTodo,
     };
   }
@@ -329,7 +389,21 @@ export class TaskManager {
   }
 
   /**
-   * Opens Task-Manager-Portable.html in default system web browser.
+   * Records operational token telemetry for an agent turn and persists to state.
+   */
+  recordTokenUsage(params: RecordTokenUsageParams): { success: boolean; message: string } {
+    if (!this.exists()) {
+      return { success: false, message: "Task Manager is not initialized." };
+    }
+    const state = this.getState();
+    recordTokenUsage(state, params);
+    return this.saveState(state);
+  }
+
+  /**
+   * Opens Task Manager in default system web browser.
+   * Renders the project's state into an ephemeral HTML in os.tmpdir() so that
+   * the workspace stays clean and free of huge HTML files.
    * Supports macOS, Windows, Linux, and WSL2 environments seamlessly.
    */
   openInBrowser(): Promise<{ success: boolean; message: string }> {
@@ -341,7 +415,45 @@ export class TaskManager {
         }
       }
 
-      const fileUrl = `file://${this.targetFilePath}`;
+      let htmlToOpen = this.stateFilePath;
+      if (!this.stateFilePath.endsWith(".html")) {
+        let state: TaskManagerState;
+        try {
+          state = this.getState();
+        } catch (err: any) {
+          return resolve({
+            success: false,
+            message: `Error al leer estado: ${err?.message || String(err)}`,
+          });
+        }
+
+        let updatedHtml = "";
+        try {
+          updatedHtml = assembleHtml(state, { modulesDir: this.modulesDir });
+        } catch (err: any) {
+          return resolve({
+            success: false,
+            message: `Error al ensamblar dashboard: ${err?.message || String(err)}`,
+          });
+        }
+
+        const projName = (state.meta?.projectName || path.basename(this.workspaceRoot)).replace(
+          /[^a-zA-Z0-9_-]/g,
+          "_"
+        );
+        const tmpFilePath = path.join(os.tmpdir(), `pi-task-manager-${projName}.html`);
+        try {
+          fs.writeFileSync(tmpFilePath, updatedHtml, "utf-8");
+          htmlToOpen = tmpFilePath;
+        } catch (err: any) {
+          return resolve({
+            success: false,
+            message: `No se pudo generar archivo temporal de visualización: ${err?.message || String(err)}`,
+          });
+        }
+      }
+
+      const fileUrl = `file://${htmlToOpen}`;
       const platform = process.platform;
 
       const isWsl = (): boolean => {
@@ -357,7 +469,7 @@ export class TaskManager {
 
       if (isWsl()) {
         try {
-          const winPath = execSync(`wslpath -w "${this.targetFilePath}"`, {
+          const winPath = execSync(`wslpath -w "${htmlToOpen}"`, {
             encoding: "utf-8",
             stdio: ["pipe", "pipe", "ignore"],
           }).trim();
@@ -396,19 +508,19 @@ if ($browser -and (Test-Path $browser)) {
                   if (cmdErr) {
                     resolve({
                       success: false,
-                      message: `No se pudo abrir el navegador en Windows: ${psErr.message}. Podés abrir el archivo manualmente en: ${this.targetFilePath}`,
+                      message: `No se pudo abrir el navegador en Windows: ${psErr.message}. Podés abrir el archivo temporal en: ${htmlToOpen}`,
                     });
                   } else {
                     resolve({
                       success: true,
-                      message: `Abierto en el navegador: ${this.targetFilePath}`,
+                      message: `Abierto en el navegador: ${htmlToOpen}`,
                     });
                   }
                 });
               } else {
                 resolve({
                   success: true,
-                  message: `Abierto en el navegador: ${this.targetFilePath}`,
+                  message: `Abierto en el navegador: ${htmlToOpen}`,
                 });
               }
             }
@@ -433,7 +545,7 @@ if ($browser -and (Test-Path $browser)) {
           } else {
             resolve({
               success: true,
-              message: `Opened Task Manager in browser: ${this.targetFilePath}`,
+              message: `Opened Task Manager in browser: ${htmlToOpen}`,
             });
           }
         });
@@ -450,7 +562,7 @@ if ($browser -and (Test-Path $browser)) {
           } else {
             resolve({
               success: true,
-              message: `Opened Task Manager in browser: ${this.targetFilePath}`,
+              message: `Opened Task Manager in browser: ${htmlToOpen}`,
             });
           }
         });
@@ -458,19 +570,68 @@ if ($browser -and (Test-Path $browser)) {
       }
 
       // Standard Linux fallback
-      exec(`xdg-open "${fileUrl}" || sensible-browser "${this.targetFilePath}" || python3 -m webbrowser "${fileUrl}"`, (err) => {
+      exec(`xdg-open "${fileUrl}" || sensible-browser "${htmlToOpen}" || python3 -m webbrowser "${fileUrl}"`, (err) => {
         if (err) {
           resolve({
             success: false,
-            message: `No se pudo abrir el navegador automáticamente: ${err.message}. Podés abrir ${this.targetFilePath} manualmente.`,
+            message: `No se pudo abrir el navegador automáticamente: ${err.message}. Podés abrir ${htmlToOpen} manualmente.`,
           });
         } else {
           resolve({
             success: true,
-            message: `Abierto en el navegador: ${this.targetFilePath}`,
+            message: `Abierto en el navegador: ${htmlToOpen}`,
           });
         }
       });
     });
+  }
+
+  /**
+   * Explicitly exports a standalone Task-Manager-Portable.html into the workspace
+   * or a custom destination for offline sharing or static publishing.
+   */
+  exportHtml(destinationPath?: string): { success: boolean; message: string; filePath?: string } {
+    if (!this.exists()) {
+      return {
+        success: false,
+        message: "No hay estado de Task Manager inicializado para exportar.",
+      };
+    }
+
+    const state = this.getState();
+    let updatedHtml = "";
+    try {
+      updatedHtml = assembleHtml(state, { modulesDir: this.modulesDir });
+    } catch (err: any) {
+      return {
+        success: false,
+        message: `Error al ensamblar HTML: ${err?.message || String(err)}`,
+      };
+    }
+
+    const dest = destinationPath
+      ? path.isAbsolute(destinationPath)
+        ? destinationPath
+        : path.join(this.workspaceRoot, destinationPath)
+      : path.join(this.workspaceRoot, "Task-Manager-Portable.html");
+
+    const parentDir = path.dirname(dest);
+    if (!fs.existsSync(parentDir)) {
+      fs.mkdirSync(parentDir, { recursive: true });
+    }
+
+    try {
+      fs.writeFileSync(dest, updatedHtml, "utf-8");
+      return {
+        success: true,
+        message: `Dashboard exportado exitosamente a: ${dest}`,
+        filePath: dest,
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: `Error al exportar HTML: ${err?.message || String(err)}`,
+      };
+    }
   }
 }

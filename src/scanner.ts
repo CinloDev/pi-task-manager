@@ -370,16 +370,18 @@ export function findProjectTasks(workspaceRoot: string): Phase[] | null {
 /**
  * Dynamically generates an architecture CodeGraph tailored to the actual project's codebase.
  */
-export function generateProjectCodegraph(workspaceRoot: string): CodeGraph {
+export function generateProjectCodegraph(workspaceRoot: string, phases?: Phase[]): CodeGraph {
   const nodes: CodeGraphNode[] = [];
   const edges: CodeGraphEdge[] = [];
 
-  const addNode = (id: string, label: string, files: string[], details: string) => {
-    nodes.push({ id, label, files, details });
+  const addNode = (id: string, label: string, files: string[], details: string, taskIds: string[] = []) => {
+    nodes.push({ id, label, files, details, taskIds });
   };
 
   const addEdge = (from: string, to: string, label?: string) => {
-    edges.push({ from, to, label });
+    if (from !== to) {
+      edges.push({ from, to, label });
+    }
   };
 
   const srcDir = fs.existsSync(path.join(workspaceRoot, "src"))
@@ -482,8 +484,9 @@ export function generateProjectCodegraph(workspaceRoot: string): CodeGraph {
     addNode("test-suite", "Suite de Pruebas", [testDir], "Pruebas automatizadas unitarias y de integración");
     if (featureNodeIds.length > 0) {
       addEdge("test-suite", featureNodeIds[0], "valida");
-    } else if (nodes.length > 0) {
-      addEdge("test-suite", nodes[0].id, "valida");
+    } else if (nodes.length > 1) {
+      const other = nodes.find((n) => n.id !== "test-suite");
+      if (other) addEdge("test-suite", other.id, "valida");
     }
   }
 
@@ -505,6 +508,33 @@ export function generateProjectCodegraph(workspaceRoot: string): CodeGraph {
     } catch {}
   }
 
+  // Map relevant tasks from phases to discovered codegraph nodes
+  if (phases && phases.length > 0) {
+    for (const phase of phases) {
+      for (const task of phase.tasks) {
+        const tTag = (task.tag || "").toLowerCase();
+        const tTitle = (task.title || "").toLowerCase();
+        for (const node of nodes) {
+          const nId = node.id.toLowerCase();
+          const nLabel = node.label.toLowerCase();
+          if (
+            (tTag === "qa" && node.id === "test-suite") ||
+            (tTag === "core" && node.id === "core-logic") ||
+            (tTag === "ui" && node.id === "ui-components") ||
+            tTag.includes(nId) ||
+            tTitle.includes(nId) ||
+            nLabel.includes(tTag && tTag.length > 2 ? tTag : "____")
+          ) {
+            if (!node.taskIds?.includes(task.id)) {
+              node.taskIds = node.taskIds || [];
+              node.taskIds.push(task.id);
+            }
+          }
+        }
+      }
+    }
+  }
+
   return { nodes, edges };
 }
 
@@ -522,7 +552,7 @@ export function scanWorkspace(workspaceRoot: string): {
   const git = scanGitState(workspaceRoot);
   const tree = scanDirectoryTree(workspaceRoot);
   const phases = findProjectTasks(workspaceRoot) || undefined;
-  const codegraph = generateProjectCodegraph(workspaceRoot);
+  const codegraph = generateProjectCodegraph(workspaceRoot, phases);
 
   return {
     meta,

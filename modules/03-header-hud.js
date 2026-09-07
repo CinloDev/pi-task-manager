@@ -402,9 +402,28 @@
 
     content.innerHTML = mainHtml + sectionsHtml + missingHtml;
 
+    var hasContent = Boolean(content.innerHTML && content.innerHTML.trim().length > 0);
+    dialog.classList.toggle('is-compact', !hasContent);
+
     var viewButton = dialog.querySelector('[data-overview-view-section]');
     viewButton.hidden = !model.targetView;
     viewButton.setAttribute('data-target-view', model.targetView || '');
+
+    // For compact dialogs (no inner content sections), omit redundant bottom close button
+    // since the top-right (X) is already immediately accessible.
+    // For larger dialogs with scrollable content, show both options!
+    var bottomClose = dialog.querySelector('.overview-detail-actions [data-overview-close]');
+    if (bottomClose) {
+      bottomClose.hidden = !hasContent;
+      bottomClose.style.display = hasContent ? '' : 'none';
+    }
+
+    var actionsContainer = dialog.querySelector('.overview-detail-actions');
+    if (actionsContainer) {
+      var showActions = hasContent || Boolean(model.targetView);
+      actionsContainer.hidden = !showActions;
+      actionsContainer.style.display = showActions ? 'flex' : 'none';
+    }
   }
 
   function closeOverviewDetailDialog(doc) {
@@ -438,9 +457,14 @@
     }
     if (dialog.getAttribute('data-overview-dialog-bound') !== '1') {
       dialog.setAttribute('data-overview-dialog-bound', '1');
-      dialog.querySelector('[data-overview-close]').addEventListener('click', function () { closeOverviewDetailDialog(doc); });
+      var closeButtons = dialog.querySelectorAll('[data-overview-close]');
+      for (var i = 0; i < closeButtons.length; i++) {
+        closeButtons[i].addEventListener('click', function () { closeOverviewDetailDialog(doc); });
+      }
       dialog.addEventListener('click', function (event) {
-        if (event.target === dialog) closeOverviewDetailDialog(doc);
+        if (event.target === dialog || (event.target.closest && event.target.closest('[data-overview-close]'))) {
+          closeOverviewDetailDialog(doc);
+        }
       });
       dialog.querySelector('[data-overview-view-section]').addEventListener('click', function () { var target = this.getAttribute('data-target-view'); closeOverviewDetailDialog(doc); var tab = doc.querySelector('.tab-btn[data-target-view=\"' + target + '\"]'); if (tab) tab.click(); });
       dialog.addEventListener('cancel', function (event) { event.preventDefault(); closeOverviewDetailDialog(doc); });

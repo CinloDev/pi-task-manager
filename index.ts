@@ -6,6 +6,7 @@ import {
   type UiContext,
 } from "./src/ui.js";
 import type { TaskStatus } from "./src/types.js";
+import { extractSessionTelemetry } from "./src/telemetry.js";
 
 export { TaskManager } from "./src/manager.js";
 export * from "./src/types.js";
@@ -46,22 +47,37 @@ export default function taskManagerExtension(pi: any): void {
 
       case "sync": {
         const res = manager.sync({ syncTasksFromMarkdown: true });
+        if (ctx?.sessionManager) {
+          const telemetry = extractSessionTelemetry(ctx.sessionManager);
+          if (telemetry) {
+            const state = manager.getState();
+            state.tokenUsage = telemetry;
+            manager.saveState(state);
+          }
+        }
         ctx.ui?.notify?.(res.message, res.success ? "info" : "error");
         return res.message;
       }
 
       case "status": {
         if (!manager.exists()) {
-          return "Task-Manager-Portable.html no existe en este proyecto. Ejecutá /task-manager init.";
+          return "Task Manager no está inicializado en este proyecto. Ejecutá /task-manager init.";
         }
         return formatStatusSummary(manager.getState());
       }
 
       case "list": {
         if (!manager.exists()) {
-          return "Task-Manager-Portable.html no existe en este proyecto. Ejecutá /task-manager init.";
+          return "Task Manager no está inicializado en este proyecto. Ejecutá /task-manager init.";
         }
         return formatTaskList(manager.getState());
+      }
+
+      case "export": {
+        const customPath = parts[1];
+        const res = manager.exportHtml(customPath);
+        ctx.ui?.notify?.(res.message, res.success ? "info" : "error");
+        return res.message;
       }
 
       case "add": {
@@ -85,7 +101,7 @@ export default function taskManagerExtension(pi: any): void {
           return msg;
         }
         if (!manager.exists()) {
-          return "Task-Manager-Portable.html no existe en este proyecto.";
+          return "Task Manager no está inicializado en este proyecto.";
         }
         const res = manager.updateTask(taskId, { status });
         ctx.ui?.notify?.(res.message, res.success ? "info" : "error");
@@ -100,7 +116,7 @@ export default function taskManagerExtension(pi: any): void {
 
   // Main /task-manager command
   pi.registerCommand?.("task-manager", {
-    description: "Abrir, sincronizar y gestionar el dashboard Task-Manager-Portable.html (/task-manager [open|sync|init|status|list|add])",
+    description: "Abrir, sincronizar y gestionar Pi Task Manager (/task-manager [open|sync|init|status|list|add|export])",
     handler: commandHandler,
   });
 
@@ -123,7 +139,7 @@ export default function taskManagerExtension(pi: any): void {
   if (typeof pi.registerTool === "function") {
     pi.registerTool({
       name: "task_manager_read",
-      description: "Read current tasks, phases, progress, and todos from the project's Task-Manager-Portable.html dashboard.",
+      description: "Read current tasks, phases, progress, and todos from the project's Pi Task Manager state (.pi/task-manager.json).",
       parameters: {
         type: "object",
         properties: {},
@@ -138,7 +154,7 @@ export default function taskManagerExtension(pi: any): void {
                 text: JSON.stringify(
                   {
                     exists: false,
-                    message: "Task-Manager-Portable.html is not initialized in this workspace.",
+                    message: "Task Manager is not initialized in this workspace (.pi/task-manager.json).",
                   },
                   null,
                   2
@@ -171,7 +187,7 @@ export default function taskManagerExtension(pi: any): void {
 
     pi.registerTool({
       name: "task_manager_update_task",
-      description: "Update the status, note, owner, or commit of a task in Task-Manager-Portable.html.",
+      description: "Update the status, note, owner, or commit of a task in Pi Task Manager (.pi/task-manager.json).",
       parameters: {
         type: "object",
         properties: {
@@ -241,7 +257,7 @@ export default function taskManagerExtension(pi: any): void {
 
     pi.registerTool({
       name: "task_manager_sync",
-      description: "Synchronize git commits, directory tree, and markdown tasks into Task-Manager-Portable.html.",
+      description: "Synchronize git commits, directory tree, markdown tasks, and session token telemetry into Pi Task Manager.",
       parameters: {
         type: "object",
         properties: {
@@ -262,6 +278,14 @@ export default function taskManagerExtension(pi: any): void {
         const res = manager.sync({
           syncTasksFromMarkdown: args.syncTasksFromMarkdown ?? true,
         });
+        if (ctx?.sessionManager) {
+          const telemetry = extractSessionTelemetry(ctx.sessionManager);
+          if (telemetry) {
+            const state = manager.getState();
+            state.tokenUsage = telemetry;
+            manager.saveState(state);
+          }
+        }
         return {
           content: [
             {
@@ -271,6 +295,48 @@ export default function taskManagerExtension(pi: any): void {
           ],
         };
       },
+    });
+  }
+
+  // Hook turn_end event to track real operational token telemetry continuously
+  if (typeof pi.on === "function") {
+    pi.on("turn_end", async (event: any, ctx: any) => {
+      try {
+        const usage = event?.message?.usage;
+        if (!usage) return;
+        const manager = getManager(ctx);
+        if (!manager.exists()) return;
+
+        // Attribute consumption to the active in-progress task owner if available, otherwise Pi
+        let activeAgent = "Pi";
+        const state = manager.getState();
+        for (const phase of state.phases) {
+          const activeTask = phase.tasks.find((t) => t.status === "in_progress" && t.owner);
+          if (activeTask && activeTask.owner) {
+            activeAgent = activeTask.owner;
+            break;
+          }
+        }
+
+        const model = event?.message?.model || ctx?.model?.id || ctx?.model;
+        const inputTokens = Number(usage.input || usage.input_tokens || usage.prompt_tokens || 0);
+        const outputTokens = Number(usage.output || usage.output_tokens || usage.completion_tokens || 0);
+        const cacheReadTokens = Number(usage.cacheRead || usage.cache_read_tokens || 0);
+        const cacheWriteTokens = Number(usage.cacheWrite || usage.cache_write_tokens || 0);
+        const reasoningTokens = Number(usage.reasoning || usage.reasoning_tokens || 0);
+        const cost = typeof usage.cost === "number" ? usage.cost : usage.cost?.total;
+
+        manager.recordTokenUsage({
+          agent: activeAgent,
+          model: typeof model === "string" ? model : undefined,
+          inputTokens,
+          outputTokens,
+          cacheReadTokens,
+          cacheWriteTokens,
+          reasoningTokens,
+          cost: typeof cost === "number" ? cost : undefined,
+        });
+      } catch {}
     });
   }
 }
