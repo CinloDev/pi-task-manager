@@ -1265,6 +1265,8 @@
     .overview-phase-list { display: flex; flex-direction: column; gap: 12px; }
     .overview-phase-row, .overview-phase-card { background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: border-color 0.15s ease; }
     .overview-phase-card:hover { border-color: var(--border-medium); }
+    .overview-phase-card.collapsed .overview-phase-tasks-grid { display: none; }
+    .overview-phase-card.collapsed .overview-phase-toggle-icon { transform: rotate(-90deg); }
     .overview-phase-heading { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; }
     .overview-phase-heading-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
     .overview-phase-heading-info strong { color: var(--text-primary); font-size: 14.5px; overflow-wrap: anywhere; }

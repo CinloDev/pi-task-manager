@@ -1272,6 +1272,8 @@
     .overview-phase-list { display: flex; flex-direction: column; gap: 12px; }
     .overview-phase-row, .overview-phase-card { background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: border-color 0.15s ease; }
     .overview-phase-card:hover { border-color: var(--border-medium); }
+    .overview-phase-card.collapsed .overview-phase-tasks-grid { display: none; }
+    .overview-phase-card.collapsed .overview-phase-toggle-icon { transform: rotate(-90deg); }
     .overview-phase-heading { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; }
     .overview-phase-heading-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
     .overview-phase-heading-info strong { color: var(--text-primary); font-size: 14.5px; overflow-wrap: anywhere; }
@@ -2286,15 +2288,15 @@
 {
   "schemaVersion": "1.0",
   "meta": {
-    "projectName": "pi-task-manager",
+    "projectName": "Pi Project",
     "version": "1.0.0",
     "branch": "main",
     "commit": "",
     "syncStatus": "Sincronizado",
     "harness": "Pi",
     "harnessRole": "Coding Agent Harness",
-    "description": "Pi extension and standalone portable HTML dashboard for project task and SDD phase management",
-    "lastUpdated": "2026-09-07T08:32:03.824Z",
+    "description": "Single-file offline project dashboard for Pi coding agent",
+    "lastUpdated": "2026-09-07T08:49:30.957Z",
     "labels": {
       "es": {
         "overallProgress": "Progreso Global",
@@ -2364,27 +2366,25 @@
       "id": "phase-2",
       "number": 2,
       "title": "Desarrollo y Lógica Core",
-      "status": "completed",
+      "status": "in_progress",
       "target": "Fase 2",
       "lead": "sdd-apply",
       "tasks": [
         {
           "id": "T2-01",
           "title": "Implementar módulos de lógica principal",
-          "status": "completed",
+          "status": "in_progress",
           "tag": "Core",
-          "note": "Implementados módulos island.ts, scanner.ts y manager.ts",
-          "owner": "Pi",
-          "commit": "cc50076"
+          "note": "En desarrollo con subagente sdd-apply",
+          "owner": "sdd-apply"
         },
         {
           "id": "T2-02",
           "title": "Construir adaptadores e interfaces de usuario",
-          "status": "completed",
+          "status": "pending",
           "tag": "UI",
-          "note": "src/ui.ts interactive menu, terminal status, and shortcuts",
-          "owner": "sdd-apply",
-          "commit": "cc50076"
+          "note": "Componentes y flujos de interacción",
+          "owner": "sdd-apply"
         }
       ]
     },
@@ -2392,27 +2392,24 @@
       "id": "phase-3",
       "number": 3,
       "title": "Testing y Verificación (TDD)",
-      "status": "completed",
+      "status": "pending",
       "target": "Fase 3",
       "lead": "sdd-verify",
       "tasks": [
         {
           "id": "T3-01",
           "title": "Suite de pruebas unitarias y de integración",
-          "status": "completed",
+          "status": "pending",
           "tag": "QA",
-          "note": "Suite of 20 Vitest unit/integration tests verified and passing",
-          "owner": "sdd-verify",
-          "commit": "cc50076"
+          "note": "Cobertura de casos borde y validación estricta",
+          "owner": "sdd-verify"
         },
         {
           "id": "T3-02",
           "title": "Verificación de tipos y linting estricto",
-          "status": "completed",
+          "status": "pending",
           "tag": "QA",
-          "owner": "sdd-verify",
-          "note": "tsc --noEmit strict type checking verified with 0 errors",
-          "commit": "cc50076"
+          "owner": "sdd-verify"
         }
       ]
     },
@@ -2420,27 +2417,24 @@
       "id": "phase-4",
       "number": 4,
       "title": "Revisión RDD y Despliegue",
-      "status": "completed",
+      "status": "pending",
       "target": "Fase 4",
       "lead": "sdd-archive",
       "tasks": [
         {
           "id": "T4-01",
           "title": "Auditoría de revisión de código (RDD)",
-          "status": "completed",
+          "status": "pending",
           "tag": "Review",
-          "note": "Gentle AI RDD review with APPROVED verdict",
-          "owner": "sdd-review",
-          "commit": "9aa04d9"
+          "note": "Revisión con Gentle AI",
+          "owner": "sdd-review"
         },
         {
           "id": "T4-02",
           "title": "Documentación final y release",
-          "status": "completed",
+          "status": "pending",
           "tag": "Docs",
-          "owner": "Orquestador",
-          "note": "Documentation, README.md, LICENSE, task-manager skill, and subagent definition",
-          "commit": "9aa04d9"
+          "owner": "Orquestador"
         }
       ]
     }
@@ -2450,355 +2444,78 @@
       "id": "td-1",
       "text": "Completar la especificación inicial con /sdd-init",
       "priority": "P0",
-      "done": true
+      "done": false
     },
     {
       "id": "td-2",
       "text": "Sincronizar tareas con /task-manager sync",
       "priority": "P1",
-      "done": true
+      "done": false
     },
     {
       "id": "td-3",
       "text": "Revisar cobertura de tests con vitest",
       "priority": "P2",
-      "done": true
+      "done": false
     }
   ],
   "git": {
     "branch": "main",
-    "commits": [
-      {
-        "hash": "9aa04d9",
-        "message": "feat: add task-tracker-manager agent definition",
-        "author": "CinloDev",
-        "date": "2026-09-07"
-      },
-      {
-        "hash": "372fac6",
-        "message": "feat: dynamic project-aware codegraph, backlog, and openspec task scanning",
-        "author": "CinloDev",
-        "date": "2026-09-07"
-      },
-      {
-        "hash": "476308d",
-        "message": "chore: sync Task-Manager-Portable.html state",
-        "author": "CinloDev",
-        "date": "2026-09-07"
-      },
-      {
-        "hash": "3782996",
-        "message": "fix: resolve assemble replace escaping bug and enrich default state with 4 phases and codegraph",
-        "author": "CinloDev",
-        "date": "2026-09-07"
-      },
-      {
-        "hash": "7477971",
-        "message": "fix: launch actual web browser instead of code editor in WSL2",
-        "author": "CinloDev",
-        "date": "2026-09-07"
-      },
-      {
-        "hash": "1ded57c",
-        "message": "fix: support WSL2 and cross-platform browser launching in openInBrowser",
-        "author": "CinloDev",
-        "date": "2026-09-07"
-      },
-      {
-        "hash": "cc50076",
-        "message": "feat: initial implementation of pi-task-manager",
-        "author": "CinloDev",
-        "date": "2026-09-07"
-      }
-    ],
-    "syncStatus": "Cambios locales pendientes"
+    "commits": [],
+    "syncStatus": "Sincronizado"
   },
-  "tree": [
-    {
-      "name": "agents/",
-      "depth": 0,
-      "type": "dir"
-    },
-    {
-      "name": "task-tracker-manager.md",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "modules/",
-      "depth": 0,
-      "type": "dir"
-    },
-    {
-      "name": "01-skeleton.html",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "02-core.js",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "03-header-hud.js",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "04-phases.js",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "05-panels.js",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "06-todo-help.js",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "07-assemble.md",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "scripts/",
-      "depth": 0,
-      "type": "dir"
-    },
-    {
-      "name": "assemble.mjs",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "skills/",
-      "depth": 0,
-      "type": "dir"
-    },
-    {
-      "name": "task-manager/",
-      "depth": 1,
-      "type": "dir"
-    },
-    {
-      "name": "SKILL.md",
-      "depth": 2,
-      "type": "file"
-    },
-    {
-      "name": "src/",
-      "depth": 0,
-      "type": "dir"
-    },
-    {
-      "name": "island.ts",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "manager.ts",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "scanner.ts",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "types.ts",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "ui.ts",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "templates/",
-      "depth": 0,
-      "type": "dir"
-    },
-    {
-      "name": "default-state.json",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "test/",
-      "depth": 0,
-      "type": "dir"
-    },
-    {
-      "name": "index.test.ts",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "island.test.ts",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "manager.test.ts",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": "scanner.test.ts",
-      "depth": 1,
-      "type": "file"
-    },
-    {
-      "name": ".gitignore",
-      "depth": 0,
-      "type": "file"
-    },
-    {
-      "name": "index.ts",
-      "depth": 0,
-      "type": "file"
-    },
-    {
-      "name": "LICENSE",
-      "depth": 0,
-      "type": "file"
-    },
-    {
-      "name": "package.json",
-      "depth": 0,
-      "type": "file"
-    },
-    {
-      "name": "pnpm-lock.yaml",
-      "depth": 0,
-      "type": "file"
-    },
-    {
-      "name": "pnpm-workspace.yaml",
-      "depth": 0,
-      "type": "file"
-    },
-    {
-      "name": "README.md",
-      "depth": 0,
-      "type": "file"
-    },
-    {
-      "name": "Task-Manager-Portable.html",
-      "depth": 0,
-      "type": "file"
-    },
-    {
-      "name": "tsconfig.json",
-      "depth": 0,
-      "type": "file"
-    },
-    {
-      "name": "vitest.config.ts",
-      "depth": 0,
-      "type": "file"
-    }
-  ],
+  "tree": [],
   "codegraph": {
     "nodes": [
       {
-        "id": "test-suite",
-        "label": "Suite de Pruebas",
+        "id": "entry",
+        "label": "Entrypoint",
         "files": [
-          "test"
+          "index.ts"
         ],
-        "details": "Pruebas automatizadas unitarias y de integración"
+        "details": "Punto de entrada y registro de comandos / extensiones"
       },
       {
-        "id": "mod-agents",
-        "label": "AGENTS",
+        "id": "core",
+        "label": "Core Logic",
         "files": [
-          "agents"
+          "src/manager.ts",
+          "src/island.ts"
         ],
-        "details": "Directorio del proyecto: agents"
+        "details": "Lógica de negocio, serialización y estado"
       },
       {
-        "id": "mod-modules",
-        "label": "MODULES",
+        "id": "ui",
+        "label": "Dashboard UI",
         "files": [
-          "modules"
+          "Task-Manager-Portable.html"
         ],
-        "details": "Directorio del proyecto: modules"
+        "details": "Dashboard visual portable para navegador"
       },
       {
-        "id": "mod-scripts",
-        "label": "SCRIPTS",
+        "id": "tests",
+        "label": "Test Suite",
         "files": [
-          "scripts"
+          "test/"
         ],
-        "details": "Directorio del proyecto: scripts"
-      },
-      {
-        "id": "mod-skills",
-        "label": "SKILLS",
-        "files": [
-          "skills"
-        ],
-        "details": "Directorio del proyecto: skills"
-      },
-      {
-        "id": "mod-src",
-        "label": "SRC",
-        "files": [
-          "src"
-        ],
-        "details": "Directorio del proyecto: src"
-      },
-      {
-        "id": "mod-templates",
-        "label": "TEMPLATES",
-        "files": [
-          "templates"
-        ],
-        "details": "Directorio del proyecto: templates"
+        "details": "Pruebas automatizadas con Vitest"
       }
     ],
     "edges": [
       {
-        "from": "test-suite",
-        "to": "test-suite",
+        "from": "entry",
+        "to": "core",
+        "label": "usa"
+      },
+      {
+        "from": "core",
+        "to": "ui",
+        "label": "sincroniza"
+      },
+      {
+        "from": "tests",
+        "to": "core",
         "label": "valida"
-      },
-      {
-        "from": "test-suite",
-        "to": "mod-agents",
-        "label": "conecta"
-      },
-      {
-        "from": "mod-agents",
-        "to": "mod-modules",
-        "label": "conecta"
-      },
-      {
-        "from": "mod-modules",
-        "to": "mod-scripts",
-        "label": "conecta"
-      },
-      {
-        "from": "mod-scripts",
-        "to": "mod-skills",
-        "label": "conecta"
-      },
-      {
-        "from": "mod-skills",
-        "to": "mod-src",
-        "label": "conecta"
-      },
-      {
-        "from": "mod-src",
-        "to": "mod-templates",
-        "label": "conecta"
       }
     ]
   }
@@ -5419,8 +5136,9 @@
         }).join('') + '</div>';
       }
 
-      return '<article class="overview-phase-row overview-phase-card">'
-        + '<div class="overview-phase-heading">'
+      return '<article class="overview-phase-row overview-phase-card collapsed">'
+        + '<div class="overview-phase-heading" role="button" tabindex="0" aria-expanded="false" style="cursor:pointer;" title="Clic para expandir/colapsar">'
+        + '<span class="overview-phase-toggle-icon" style="display:inline-flex;align-items:center;margin-right:6px;color:var(--text-secondary);transition:transform 0.2s ease;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></span>'
         + '<span class="phase-number">FASE ' + phaseNumber + '</span>'
         + '<div class="overview-phase-heading-info">'
         + '<strong>' + esc(phase.title || 'Fase') + '</strong>'
@@ -5487,8 +5205,8 @@
       var target = esc(phase.target || '');
       var lead = esc(phase.lead || '');
 
-      html += '<div class="phase-card" id="phase-' + esc(String(phase.number || i+1)) + '" data-phase-id="' + phaseId + '" data-status="' + esc(status) + '">'
-        + '<button type=\"button\" class=\"phase-header\" aria-expanded=\"true\">'
+      html += '<div class="phase-card collapsed" id="phase-' + esc(String(phase.number || i+1)) + '" data-phase-id="' + phaseId + '" data-status="' + esc(status) + '">'
+        + '<button type=\"button\" class=\"phase-header\" aria-expanded=\"false\">'
         + '<div class=\"phase-header-left\">'
         + '<span class=\"phase-toggle-icon\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"6 9 12 15 18 9\"></polyline></svg></span>'
         + '<span class=\"phase-number\">' + esc(phaseNumberStr) + '</span>'
@@ -5622,13 +5340,34 @@
     if (overviewPhases && overviewPhases.getAttribute('data-task-bound') !== '1') {
       overviewPhases.setAttribute('data-task-bound', '1');
       overviewPhases.addEventListener('click', function (event) {
-        var card = event.target.closest('.overview-task-card');
-        if (card && overviewPhases.contains(card)) triggerTaskModal(card);
+        var heading = event.target.closest('.overview-phase-heading');
+        if (heading && overviewPhases.contains(heading)) {
+          var card = heading.closest('.overview-phase-card');
+          if (card) {
+            var isCol = card.classList.contains('collapsed');
+            card.classList.toggle('collapsed', !isCol);
+            heading.setAttribute('aria-expanded', isCol ? 'true' : 'false');
+            return;
+          }
+        }
+        var cardTask = event.target.closest('.overview-task-card');
+        if (cardTask && overviewPhases.contains(cardTask)) triggerTaskModal(cardTask);
       });
       overviewPhases.addEventListener('keydown', function (event) {
         if (event.key === 'Enter' || event.key === ' ') {
-          var card = event.target.closest && event.target.closest('.overview-task-card');
-          if (card && overviewPhases.contains(card)) { event.preventDefault(); triggerTaskModal(card); }
+          var heading = event.target.closest && event.target.closest('.overview-phase-heading');
+          if (heading && overviewPhases.contains(heading)) {
+            event.preventDefault();
+            var card = heading.closest('.overview-phase-card');
+            if (card) {
+              var isCol = card.classList.contains('collapsed');
+              card.classList.toggle('collapsed', !isCol);
+              heading.setAttribute('aria-expanded', isCol ? 'true' : 'false');
+              return;
+            }
+          }
+          var cardTask = event.target.closest && event.target.closest('.overview-task-card');
+          if (cardTask && overviewPhases.contains(cardTask)) { event.preventDefault(); triggerTaskModal(cardTask); }
         }
       });
     }
@@ -5670,7 +5409,7 @@
             if (b2) b2.setAttribute('aria-expanded', 'false');
           }
         });
-        expandBtn.textContent = anyCollapsed ? 'Collapse All' : 'Expand All';
+        expandBtn.textContent = anyCollapsed ? 'Colapsar fases' : 'Expandir fases';
       });
     }
 

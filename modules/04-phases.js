@@ -391,8 +391,9 @@
         }).join('') + '</div>';
       }
 
-      return '<article class="overview-phase-row overview-phase-card">'
-        + '<div class="overview-phase-heading">'
+      return '<article class="overview-phase-row overview-phase-card collapsed">'
+        + '<div class="overview-phase-heading" role="button" tabindex="0" aria-expanded="false" style="cursor:pointer;" title="Clic para expandir/colapsar">'
+        + '<span class="overview-phase-toggle-icon" style="display:inline-flex;align-items:center;margin-right:6px;color:var(--text-secondary);transition:transform 0.2s ease;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></span>'
         + '<span class="phase-number">FASE ' + phaseNumber + '</span>'
         + '<div class="overview-phase-heading-info">'
         + '<strong>' + esc(phase.title || 'Fase') + '</strong>'
@@ -459,8 +460,8 @@
       var target = esc(phase.target || '');
       var lead = esc(phase.lead || '');
 
-      html += '<div class="phase-card" id="phase-' + esc(String(phase.number || i+1)) + '" data-phase-id="' + phaseId + '" data-status="' + esc(status) + '">'
-        + '<button type=\"button\" class=\"phase-header\" aria-expanded=\"true\">'
+      html += '<div class="phase-card collapsed" id="phase-' + esc(String(phase.number || i+1)) + '" data-phase-id="' + phaseId + '" data-status="' + esc(status) + '">'
+        + '<button type=\"button\" class=\"phase-header\" aria-expanded=\"false\">'
         + '<div class=\"phase-header-left\">'
         + '<span class=\"phase-toggle-icon\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"6 9 12 15 18 9\"></polyline></svg></span>'
         + '<span class=\"phase-number\">' + esc(phaseNumberStr) + '</span>'
@@ -594,13 +595,34 @@
     if (overviewPhases && overviewPhases.getAttribute('data-task-bound') !== '1') {
       overviewPhases.setAttribute('data-task-bound', '1');
       overviewPhases.addEventListener('click', function (event) {
-        var card = event.target.closest('.overview-task-card');
-        if (card && overviewPhases.contains(card)) triggerTaskModal(card);
+        var heading = event.target.closest('.overview-phase-heading');
+        if (heading && overviewPhases.contains(heading)) {
+          var card = heading.closest('.overview-phase-card');
+          if (card) {
+            var isCol = card.classList.contains('collapsed');
+            card.classList.toggle('collapsed', !isCol);
+            heading.setAttribute('aria-expanded', isCol ? 'true' : 'false');
+            return;
+          }
+        }
+        var cardTask = event.target.closest('.overview-task-card');
+        if (cardTask && overviewPhases.contains(cardTask)) triggerTaskModal(cardTask);
       });
       overviewPhases.addEventListener('keydown', function (event) {
         if (event.key === 'Enter' || event.key === ' ') {
-          var card = event.target.closest && event.target.closest('.overview-task-card');
-          if (card && overviewPhases.contains(card)) { event.preventDefault(); triggerTaskModal(card); }
+          var heading = event.target.closest && event.target.closest('.overview-phase-heading');
+          if (heading && overviewPhases.contains(heading)) {
+            event.preventDefault();
+            var card = heading.closest('.overview-phase-card');
+            if (card) {
+              var isCol = card.classList.contains('collapsed');
+              card.classList.toggle('collapsed', !isCol);
+              heading.setAttribute('aria-expanded', isCol ? 'true' : 'false');
+              return;
+            }
+          }
+          var cardTask = event.target.closest && event.target.closest('.overview-task-card');
+          if (cardTask && overviewPhases.contains(cardTask)) { event.preventDefault(); triggerTaskModal(cardTask); }
         }
       });
     }
@@ -642,7 +664,7 @@
             if (b2) b2.setAttribute('aria-expanded', 'false');
           }
         });
-        expandBtn.textContent = anyCollapsed ? 'Collapse All' : 'Expand All';
+        expandBtn.textContent = anyCollapsed ? 'Colapsar fases' : 'Expandir fases';
       });
     }
 
