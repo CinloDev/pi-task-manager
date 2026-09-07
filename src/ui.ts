@@ -613,14 +613,14 @@ export class TaskManagerModalOverlay {
       const vis = getVisibleWidth(titleStr);
       const leftW = Math.max(2, Math.floor((innerW - vis) / 2));
       const rightW = Math.max(2, innerW - vis - leftW);
-      return FG_BORDER + "╔" + "═".repeat(leftW) + RESET + titleStr + FG_BORDER + "═".repeat(rightW) + "╗" + RESET;
+      return BG_VIOLET + FG_BORDER + "╔" + "═".repeat(leftW) + RESET + BG_VIOLET + titleStr + RESET + BG_VIOLET + FG_BORDER + "═".repeat(rightW) + "╗" + RESET;
     };
 
-    const midDouble = () => FG_BORDER + "╠" + "═".repeat(innerW) + "╣" + RESET;
-    const botDouble = () => FG_BORDER + "╚" + "═".repeat(innerW) + "╝" + RESET;
+    const midDouble = () => BG_VIOLET + FG_BORDER + "╠" + "═".repeat(innerW) + "╣" + RESET;
+    const botDouble = () => BG_VIOLET + FG_BORDER + "╚" + "═".repeat(innerW) + "╝" + RESET;
 
     const row = (content: string) =>
-      FG_BORDER + "║" + RESET + BG_VIOLET + padEndVisible(" " + content, innerW) + RESET + FG_BORDER + "║" + RESET;
+      BG_VIOLET + FG_BORDER + "║" + RESET + BG_VIOLET + padEndVisible(" " + content, innerW) + RESET + BG_VIOLET + FG_BORDER + "║" + RESET;
 
     const emptyRow = () => row("");
 
