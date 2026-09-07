@@ -74,4 +74,4 @@ pnpm typecheck
 
 ## 👥 Reconocimientos
 
-Este proyecto toma como base e inspiración el trabajo original de **[Ramón (@Gentleman-Programming)](https://github.com/Gentleman-Programming)** en el diseño de paneles técnicos portables. Si tus aportes modifican o enriquecen la integración con dicho ecosistema, menciónalo adecuadamente en la documentación.
+Este proyecto toma como base e inspiración el trabajo original de **[Ramón (@RamonsDka)](https://github.com/RamonsDka/opencode-sdd-profile-manager)** en el diseño de paneles técnicos portables. Si tus aportes modifican o enriquecen la integración con dicho ecosistema, menciónalo adecuadamente en la documentación.

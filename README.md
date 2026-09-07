@@ -1,7 +1,7 @@
 # Pi Task Manager (`pi-task-manager`)
 
 > Technical cockpit, visual dashboard, and Pi coding agent extension for project task tracking, token telemetry, and Spec-Driven Development (SDD) phase management.  
-> **Basado originalmente en el concepto de plugin y dashboard portable de [Ramón (@Gentleman-Programming)](https://github.com/Gentleman-Programming), adaptado, rediseñado y evolucionado para la arquitectura moderna de Pi.**
+> **Basado originalmente en el concepto de plugin y dashboard portable de [Ramón (@RamonsDka)](https://github.com/RamonsDka/opencode-sdd-profile-manager), adaptado, rediseñado y evolucionado para la arquitectura moderna de Pi.**
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-blue.svg)
@@ -117,7 +117,7 @@ pnpm run assemble
 
 ## 👥 Reconocimientos y Créditos
 
-Este proyecto está basado e inspirado en la visión original del plugin y panel de control portable creado por **[Ramón / Gentleman-Programming](https://github.com/Gentleman-Programming)**.  
+Este proyecto está basado e inspirado en la visión original del plugin y panel de control portable creado por **[Ramón (@RamonsDka)](https://github.com/RamonsDka/opencode-sdd-profile-manager)**.  
 A partir de esa base, se rediseñó la arquitectura para desacoplar el estado en `.pi/task-manager.json`, eliminar la contaminación de archivos HTML en repositorios, incorporar el modal flotante TUI en la terminal y conectar la telemetría operativa en tiempo real con el runtime de **Pi**.
 
 ---
