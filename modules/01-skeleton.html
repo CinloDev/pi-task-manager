@@ -1261,13 +1261,13 @@
     }
 
     .overview-detail-stack { display: flex; flex-direction: column; gap: 32px; }
-    .overview-section-copy { color: var(--text-tertiary); font-size: 12px; max-width: 70ch; }
+    .overview-section-copy { color: var(--text-tertiary); font-size: 14.5px; max-width: 70ch; }
     .overview-phase-list { display: flex; flex-direction: column; gap: 24px; }
     .overview-phase-row, .overview-phase-card {
       background: var(--bg-surface-secondary);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
-      padding: 18px 24px;
+      padding: 20px 26px;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -1297,8 +1297,8 @@
       min-width: 0;
     }
     .overview-phase-toggle-icon {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1316,35 +1316,35 @@
       color: #fff;
     }
     .overview-phase-heading-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-    .overview-phase-heading-info strong { color: var(--text-primary); font-size: 15.5px; font-weight: 700; overflow-wrap: anywhere; }
-    .overview-phase-submeta { display: flex; flex-wrap: wrap; gap: 10px; color: var(--text-tertiary); font-size: 12px; }
-    .overview-phase-heading-right { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
-    .overview-phase-pct-label { font: 700 13px var(--font-mono); color: var(--text-secondary); }
-    .overview-phase-tasks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 4px; }
-    .overview-task-card { background: var(--bg-surface-primary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; border-left: 3px solid var(--border-subtle); }
+    .overview-phase-heading-info strong { color: var(--text-primary); font-size: 19px; font-weight: 700; overflow-wrap: anywhere; }
+    .overview-phase-submeta { display: flex; flex-wrap: wrap; gap: 12px; color: var(--text-tertiary); font-size: 14px; }
+    .overview-phase-heading-right { display: flex; align-items: center; gap: 18px; flex-shrink: 0; }
+    .overview-phase-pct-label { font: 700 16px var(--font-mono); color: var(--text-secondary); }
+    .overview-phase-tasks-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-top: 6px; }
+    .overview-task-card { background: var(--bg-surface-primary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; border-left: 3px solid var(--border-subtle); }
     .overview-task-card.status-completed { border-left-color: var(--accent-green); }
     .overview-task-card.status-inprogress { border-left-color: var(--accent-blue); }
     .overview-task-card.status-pending { border-left-color: var(--accent-amber); }
     .overview-task-card.status-blocked { border-left-color: var(--accent-red); }
     .overview-task-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
     .overview-task-id-title { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
-    .overview-task-title { font-size: 12.5px; color: var(--text-primary); font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
-    .overview-task-note { font-size: 11.5px; color: var(--text-secondary); line-height: 1.35; background: var(--bg-canvas); padding: 5px 8px; border-radius: var(--radius-sm); }
-    .overview-task-bottom { display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
-    .overview-task-meta-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .overview-subtasks-pill { font: 11px var(--font-mono); color: var(--accent-purple); background: rgba(188, 140, 255, 0.1); padding: 2px 6px; border-radius: var(--radius-sm); border: 1px solid rgba(188, 140, 255, 0.25); }
-    .overview-phase-empty { color: var(--text-muted); font-size: 12px; font-style: italic; padding: 8px 0; }
-    .overview-phase-tasks { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 7px 12px; }
-    .overview-phase-tasks > span { display: flex; align-items: center; gap: 7px; color: var(--text-secondary); font-size: 12px; min-width: 0; overflow-wrap: anywhere; }
+    .overview-task-title { font-size: 16px; color: var(--text-primary); font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+    .overview-task-note { font-size: 14px; color: var(--text-secondary); line-height: 1.45; background: var(--bg-canvas); padding: 7px 10px; border-radius: var(--radius-sm); }
+    .overview-task-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 2px; font-size: 13.5px; }
+    .overview-task-meta-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .overview-subtasks-pill { font: 600 12.5px var(--font-mono); color: var(--accent-purple); background: rgba(188, 140, 255, 0.1); padding: 3px 8px; border-radius: var(--radius-sm); border: 1px solid rgba(188, 140, 255, 0.25); }
+    .overview-phase-empty { color: var(--text-muted); font-size: 14px; font-style: italic; padding: 10px 0; }
+    .overview-phase-tasks { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px 14px; }
+    .overview-phase-tasks > span { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 14px; min-width: 0; overflow-wrap: anywhere; }
 
     /* Sub-tasks styles in Dedicated Phases tab */
-    .task-subtasks-box { background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px 12px; margin: 8px 0 4px 0; display: flex; flex-direction: column; gap: 8px; }
+    .task-subtasks-box { background: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 12px 14px; margin: 8px 0 4px 0; display: flex; flex-direction: column; gap: 8px; }
     .task-subtasks-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .task-subtasks-title { font: 600 11.5px var(--font-mono); color: var(--text-secondary); }
-    .subtasks-mini-track { width: 80px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 2px; overflow: hidden; }
-    .subtasks-mini-bar { height: 100%; background: var(--accent-green); border-radius: 2px; transition: width 0.3s ease; }
-    .task-subtasks-list { display: flex; flex-direction: column; gap: 4px; }
-    .task-subtask-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); padding: 3px 0; }
+    .task-subtasks-title { font: 700 13px var(--font-mono); color: var(--text-secondary); }
+    .subtasks-mini-track { width: 80px; height: 5px; background: rgba(255, 255, 255, 0.1); border-radius: 3px; overflow: hidden; }
+    .subtasks-mini-bar { height: 100%; background: var(--accent-green); border-radius: 3px; transition: width 0.3s ease; }
+    .task-subtasks-list { display: flex; flex-direction: column; gap: 6px; }
+    .task-subtask-item { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--text-secondary); padding: 3px 0; }
     .task-subtask-item.subtask-done { color: var(--text-muted); text-decoration: line-through; }
     .task-subtask-item.subtask-done .subtask-icon { color: var(--accent-green); text-decoration: none; font-weight: bold; }
     .task-subtask-item.subtask-inprogress .subtask-icon { color: var(--accent-blue); }
