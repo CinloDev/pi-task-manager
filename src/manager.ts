@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { exec, execSync } from "node:child_process";
+import { exec, execFile, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import type { TaskManagerState, TaskStatus, Task, TodoItem } from "./types.js";
 import {
@@ -283,7 +283,6 @@ export class TaskManager {
 
       const fileUrl = `file://${this.targetFilePath}`;
       const platform = process.platform;
-      let cmd = "";
 
       const isWsl = (): boolean => {
         if (platform !== "linux") return false;
@@ -296,62 +295,119 @@ export class TaskManager {
         }
       };
 
-      if (platform === "darwin") {
-        cmd = `open "${fileUrl}"`;
-      } else if (platform === "win32") {
-        cmd = `start "" "${fileUrl}"`;
-      } else if (isWsl()) {
-        // In WSL2, open in the Windows host default browser
-        let hasWslView = false;
+      if (isWsl()) {
         try {
-          execSync("which wslview", { stdio: "ignore" });
-          hasWslView = true;
-        } catch {}
+          const winPath = execSync(`wslpath -w "${this.targetFilePath}"`, {
+            encoding: "utf-8",
+            stdio: ["pipe", "pipe", "ignore"],
+          }).trim();
 
-        if (hasWslView) {
-          cmd = `wslview "${this.targetFilePath}"`;
-        } else {
-          try {
-            const winPath = execSync(`wslpath -w "${this.targetFilePath}"`, {
-              encoding: "utf-8",
-              stdio: ["pipe", "pipe", "ignore"],
-            }).trim();
-            const escapedWinPath = winPath.replace(/'/g, "''");
-            cmd = `powershell.exe -NoProfile -Command "Start-Process '${escapedWinPath}'"`;
-          } catch {
-            cmd = `/mnt/c/Windows/explorer.exe "${this.targetFilePath}"`;
-          }
+          // Script in PowerShell to specifically find the default web browser (https handler)
+          // instead of opening the file in VS Code or code editors associated with .html
+          const psScript = `
+$filePath = "${winPath}";
+$progId = (Get-ItemProperty "HKCU:\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice" -ErrorAction SilentlyContinue).ProgId;
+$raw = if ($progId) { (Get-ItemProperty "Registry::HKEY_CLASSES_ROOT\\$progId\\shell\\open\\command" -ErrorAction SilentlyContinue)."(default)" } else { $null };
+$browser = $null;
+if ($raw -and $raw.StartsWith([char]34)) {
+    $browser = $raw.Split([char]34)[1];
+} elseif ($raw) {
+    $browser = $raw.Split(" ")[0];
+}
+if ($browser -and (Test-Path $browser)) {
+    Start-Process -FilePath $browser -ArgumentList $filePath;
+} else {
+    try { Start-Process "chrome.exe" -ArgumentList $filePath } catch {
+        try { Start-Process "msedge.exe" -ArgumentList $filePath } catch {
+            Start-Process $filePath;
         }
-      } else {
-        // Standard Linux: xdg-open -> sensible-browser -> python3
-        let hasXdg = false;
-        try {
-          execSync("which xdg-open", { stdio: "ignore" });
-          hasXdg = true;
-        } catch {}
+    }
+}
+`;
+          const encoded = Buffer.from(psScript, "utf16le").toString("base64");
 
-        if (hasXdg) {
-          cmd = `xdg-open "${fileUrl}"`;
-        } else {
-          try {
-            execSync("which sensible-browser", { stdio: "ignore" });
-            cmd = `sensible-browser "${this.targetFilePath}"`;
-          } catch {
-            cmd = `python3 -m webbrowser "${fileUrl}"`;
-          }
+          execFile(
+            "powershell.exe",
+            ["-NoProfile", "-NonInteractive", "-EncodedCommand", encoded],
+            (psErr) => {
+              if (psErr) {
+                // Fallback to explorer or cmd.exe
+                execFile("cmd.exe", ["/c", "start", "", winPath], (cmdErr) => {
+                  if (cmdErr) {
+                    resolve({
+                      success: false,
+                      message: `No se pudo abrir el navegador en Windows: ${psErr.message}. Podés abrir el archivo manualmente en: ${this.targetFilePath}`,
+                    });
+                  } else {
+                    resolve({
+                      success: true,
+                      message: `Abierto en el navegador: ${this.targetFilePath}`,
+                    });
+                  }
+                });
+              } else {
+                resolve({
+                  success: true,
+                  message: `Abierto en el navegador: ${this.targetFilePath}`,
+                });
+              }
+            }
+          );
+          return;
+        } catch (wslErr: any) {
+          resolve({
+            success: false,
+            message: `Error al convertir la ruta de WSL: ${wslErr?.message || String(wslErr)}`,
+          });
+          return;
         }
       }
 
-      exec(cmd, (error) => {
-        if (error) {
+      if (platform === "darwin") {
+        execFile("open", [fileUrl], (err) => {
+          if (err) {
+            resolve({
+              success: false,
+              message: `Could not launch browser: ${err.message}`,
+            });
+          } else {
+            resolve({
+              success: true,
+              message: `Opened Task Manager in browser: ${this.targetFilePath}`,
+            });
+          }
+        });
+        return;
+      }
+
+      if (platform === "win32") {
+        execFile("cmd.exe", ["/c", "start", "", fileUrl], (err) => {
+          if (err) {
+            resolve({
+              success: false,
+              message: `Could not launch browser: ${err.message}`,
+            });
+          } else {
+            resolve({
+              success: true,
+              message: `Opened Task Manager in browser: ${this.targetFilePath}`,
+            });
+          }
+        });
+        return;
+      }
+
+      // Standard Linux fallback
+      exec(`xdg-open "${fileUrl}" || sensible-browser "${this.targetFilePath}" || python3 -m webbrowser "${fileUrl}"`, (err) => {
+        if (err) {
           resolve({
             success: false,
-            message: `Could not launch browser automatically: ${error.message}. You can open ${this.targetFilePath} manually.`,
+            message: `No se pudo abrir el navegador automáticamente: ${err.message}. Podés abrir ${this.targetFilePath} manualmente.`,
           });
         } else {
           resolve({
             success: true,
-            message: `Opened Task Manager in browser: ${this.targetFilePath}`,
+            message: `Abierto en el navegador: ${this.targetFilePath}`,
           });
         }
       });
