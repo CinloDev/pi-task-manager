@@ -281,40 +281,6 @@ export function parseMarkdownTasks(markdown: string, defaultPhaseTitle?: string)
       activePhase.tasks.push(currentTask);
       continue;
     }
-
-    // 3. Match Backlog items with status badges (e.g. 1. **WebP Converter** `[✅ COMPLETADO]` or `[⏳ EN PROGRESO]`)
-    const backlogMatch = line.match(/^\s*(?:\d+\.|\*|-)\s+\*\*([^*]+)\*\*\s*(?:`?\[([^\]]+)\]`?)?(.*)$/);
-    if (backlogMatch && !line.includes("|") && backlogMatch[1].length > 3) {
-      const activePhase = ensurePhase();
-      taskCounter++;
-
-      const itemTitle = backlogMatch[1].trim();
-      const statusBadge = (backlogMatch[2] || "").toLowerCase();
-      const extraNote = backlogMatch[3]?.trim();
-
-      let status: TaskStatus = "pending";
-      if (statusBadge.includes("✅") || statusBadge.includes("completado") || statusBadge.includes("done")) {
-        status = "completed";
-      } else if (
-        statusBadge.includes("⏳") ||
-        statusBadge.includes("progreso") ||
-        statusBadge.includes("planificación") ||
-        statusBadge.includes("siguiente")
-      ) {
-        status = "in_progress";
-      } else if (statusBadge.includes("❌") || statusBadge.includes("bloqueado")) {
-        status = "blocked";
-      }
-
-      currentTask = {
-        id: `T${activePhase.number}-${String(taskCounter).padStart(2, "0")}`,
-        title: itemTitle,
-        status,
-        note: extraNote ? extraNote.replace(/^[-:]\s*/, "") : undefined,
-        subtasks: [],
-      };
-      activePhase.tasks.push(currentTask);
-    }
   }
 
   // Filter out phases that ended up with 0 tasks
@@ -396,25 +362,6 @@ export function findProjectTasks(workspaceRoot: string): Phase[] | null {
         return aggregatedPhases;
       }
     } catch {}
-  }
-
-  // 3. Backlog & Roadmap documents (e.g. BACKLOG02.md, BACKLOG.md, docs/ROADMAP.md)
-  const backlogCandidates = [
-    path.join(workspaceRoot, "BACKLOG02.md"),
-    path.join(workspaceRoot, "BACKLOG.md"),
-    path.join(workspaceRoot, "docs", "ROADMAP.md"),
-    path.join(workspaceRoot, "ROADMAP.md"),
-    path.join(workspaceRoot, "IMPROVEMENTS.md"),
-  ];
-
-  for (const bPath of backlogCandidates) {
-    if (fs.existsSync(bPath)) {
-      try {
-        const content = fs.readFileSync(bPath, "utf-8");
-        const phases = parseMarkdownTasks(content);
-        if (phases.length > 0) return phases;
-      } catch {}
-    }
   }
 
   return null;
