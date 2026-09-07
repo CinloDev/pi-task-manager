@@ -358,7 +358,24 @@
       var sectionCards = model.sections.map(function (section) {
         if (!section.items.length) return '';
         var itemsHtml = section.items.map(function (item) {
-          return '<li>' + esc(item) + '</li>';
+          var str = String(item || '');
+          if (str.includes(' · ')) {
+            var parts = str.split(' · ');
+            var left = parts[0];
+            var right = parts.slice(1).join(' · ');
+            var st = normalizeStatus(right);
+            if (st === 'completed' || st === 'in-progress' || st === 'pending' || st === 'blocked') {
+              return '<li class="overview-meta-item">'
+                + '<span class="overview-meta-item-title">' + esc(left) + '</span>'
+                + '<span class="badge ' + statusBadgeClass(st) + '"><span class="badge-dot ' + statusDotClass(st) + '"></span> ' + statusLabel(st) + '</span>'
+                + '</li>';
+            }
+            return '<li class="overview-meta-item">'
+              + '<span class="overview-meta-item-title">' + esc(left) + '</span>'
+              + '<span class="overview-meta-item-sub">' + esc(right) + '</span>'
+              + '</li>';
+          }
+          return '<li class="overview-meta-item"><span>' + esc(str) + '</span></li>';
         }).join('');
         return '<section class="overview-detail-section overview-meta-group">'
           + '<h3>' + esc(section.label) + '</h3>'

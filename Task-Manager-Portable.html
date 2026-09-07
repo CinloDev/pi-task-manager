@@ -1626,6 +1626,8 @@
     .btn-secondary { background: var(--bg-surface-tertiary); border-color: var(--border-subtle); color: #c9d1d9; }
     .btn-secondary:hover { background: var(--bg-surface-hover); border-color: var(--border-medium); color: #fff; }
     .btn-secondary.active { background: #1f6feb; border-color: var(--accent-blue); color: #fff; }
+    .btn-primary { background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%); border-color: rgba(188, 140, 255, 0.5); color: #fff; box-shadow: 0 0 12px rgba(168, 85, 247, 0.3); }
+    .btn-primary:hover { background: linear-gradient(135deg, #c084fc 0%, #9333ea 100%); border-color: rgba(188, 140, 255, 0.8); color: #fff; box-shadow: 0 0 18px rgba(168, 85, 247, 0.5); }
 
     /* Progress Tracks */
     .progress-track {
@@ -2181,26 +2183,161 @@
     .help-portability-note p { color:var(--text-tertiary); font-size:11.5px; margin:3px 0 8px; overflow-wrap:anywhere; }
     .help-portability-tags { display:flex; flex-wrap:wrap; gap:6px; }
     .help-portability-tags span { background:var(--bg-surface-tertiary); border:1px solid var(--border-subtle); border-radius:var(--radius-full); padding:3px 8px; color:var(--text-secondary); font-size:10.5px; }
-    #overview-detail-dialog { color:var(--text-primary); background:var(--bg-surface-primary); border:1px solid var(--border-focus); border-radius:var(--radius-lg); width:min(1080px,calc(100% - 32px)); max-width:none; max-height:min(820px,calc(100dvh - 32px)); margin:auto; padding:24px; box-shadow:var(--shadow-lg),0 0 50px rgba(88,166,255,.14); overflow:auto; }
-    #overview-detail-dialog::backdrop { background:rgba(3,6,10,.82); }
-    .overview-detail-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; }
-    #overview-detail-title { font-size:24px; color:var(--text-primary); }
-    #overview-detail-value { color:var(--accent-blue); font:700 22px var(--font-mono); }
-    #overview-detail-summary { color:var(--text-secondary); max-width:68ch; margin-top:5px; }
-    #overview-detail-content { display:flex; flex-direction:column; gap:16px; width:100%; }
-    .overview-detail-main-custom { width:100%; min-width:0; }
-    .overview-detail-meta-strip { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; width:100%; }
-    @media (max-width:900px) { .overview-detail-meta-strip { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-    @media (max-width:480px) { .overview-detail-meta-strip { grid-template-columns:1fr; } }
-    .overview-detail-section { background:var(--bg-surface-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); padding:12px 14px; min-width:0; }
-    .overview-detail-section h3 { color:var(--text-tertiary); font:600 11px var(--font-mono); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px; }
-    .overview-meta-list { display:flex; flex-direction:column; gap:4px; padding:0; margin:0; list-style:none; }
-    .overview-meta-list li { font-size:12px; color:var(--text-secondary); line-height:1.4; word-break:break-word; }
-    .overview-detail-missing { background:var(--bg-surface-secondary); border:1px solid rgba(210,153,34,.48); border-radius:var(--radius-sm); padding:12px 14px; }
-    .overview-detail-missing h3 { color:var(--text-primary); font-size:13px; margin-bottom:8px; }
-    .overview-detail-missing p { color:var(--accent-amber); margin-bottom:8px; font-size:12px; }
-    .overview-detail-missing ul { display:flex; flex-direction:column; gap:4px; padding-left:18px; color:var(--text-secondary); font-size:12px; }
-    .overview-detail-actions { display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; margin-top:18px; }
+    #overview-detail-dialog {
+      color: var(--text-primary);
+      background: #140a28;
+      border: 1px solid rgba(188, 140, 255, 0.35);
+      border-radius: 18px;
+      width: min(680px, calc(100% - 32px));
+      max-width: 680px;
+      max-height: min(85vh, calc(100dvh - 48px));
+      margin: auto;
+      padding: 26px 30px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 25px rgba(188, 140, 255, 0.18);
+      overflow-y: auto;
+      position: fixed;
+      inset: 0;
+    }
+    #overview-detail-dialog::backdrop {
+      background: rgba(8, 4, 16, 0.78);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .overview-detail-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(188, 140, 255, 0.15);
+    }
+    .overview-detail-titles-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+    #overview-detail-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+    }
+    #overview-detail-value {
+      color: #58a6ff;
+      font: 800 24px var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #overview-detail-summary {
+      color: var(--text-secondary);
+      font-size: 14.5px;
+      line-height: 1.5;
+      margin-top: 2px;
+    }
+    .dialog-close-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      font-size: 16px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+    .dialog-close-btn:hover {
+      background: rgba(248, 81, 73, 0.18);
+      border-color: rgba(248, 81, 73, 0.45);
+      color: #ff7b72;
+      transform: scale(1.05);
+    }
+    #overview-detail-content {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      width: 100%;
+    }
+    .overview-detail-main-custom { width: 100%; min-width: 0; }
+    .overview-detail-meta-strip {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 100%;
+    }
+    .overview-detail-section {
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid rgba(188, 140, 255, 0.2);
+      border-radius: 12px;
+      padding: 16px 20px;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .overview-detail-section h3 {
+      color: var(--accent-purple);
+      font: 700 12px var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .overview-meta-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+    .overview-meta-item {
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.025);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: background 0.12s ease;
+    }
+    .overview-meta-item:hover {
+      background: rgba(188, 140, 255, 0.08);
+      border-color: rgba(188, 140, 255, 0.3);
+    }
+    .overview-meta-item-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      flex: 1;
+    }
+    .overview-meta-item-sub {
+      color: var(--text-secondary);
+      font-size: 13.5px;
+    }
+    .overview-detail-missing {
+      background: rgba(245, 158, 11, 0.05);
+      border: 1px solid rgba(210, 153, 34, 0.48);
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+    .overview-detail-missing h3 { color: var(--accent-amber); font-size: 14px; margin-bottom: 8px; }
+    .overview-detail-missing p { color: var(--text-secondary); margin-bottom: 8px; font-size: 13px; }
+    .overview-detail-missing ul { display: flex; flex-direction: column; gap: 4px; padding-left: 18px; color: var(--text-secondary); font-size: 13px; }
+    .overview-detail-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(188, 140, 255, 0.15);
+    }
     .state-tools { margin-top:14px; }
     .state-health-card { display:grid; grid-template-columns:auto minmax(0,1fr) auto; gap:12px; align-items:center; background:var(--bg-surface-secondary); border:1px solid var(--border-medium); border-radius:var(--radius-md); padding:14px; }
     .state-health-icon { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font:700 14px var(--font-mono); }
@@ -2525,7 +2662,7 @@
     "harness": "Pi",
     "harnessRole": "Coding Agent Harness",
     "description": "Single-file offline project dashboard for Pi coding agent",
-    "lastUpdated": "2026-09-07T09:48:01.543Z",
+    "lastUpdated": "2026-09-07T09:59:20.457Z",
     "labels": {
       "es": {
         "overallProgress": "Progreso Global",
@@ -2856,7 +2993,21 @@
     <!-- Error banner hidden by default -->
     <div id="tm-error-banner" hidden data-error-banner style="display:none;">Error banner placeholder</div>
     <dialog id="codegraph-dialog" aria-labelledby="codegraph-dialog-title" aria-describedby="codegraph-dialog-description"><h2 id="codegraph-dialog-title"></h2><p id="codegraph-dialog-description"></p><div id="codegraph-dialog-content"></div><button type="button" class="btn btn-secondary" data-codegraph-close>Cerrar</button></dialog>
-    <dialog id="overview-detail-dialog" aria-labelledby="overview-detail-title" aria-describedby="overview-detail-summary"><div class="overview-detail-heading"><div><h2 id="overview-detail-title"></h2><div id="overview-detail-value"></div><p id="overview-detail-summary"></p></div><button type="button" class="btn btn-secondary" data-overview-close>Cerrar</button></div><div id="overview-detail-content"></div><div class="overview-detail-actions"><button type="button" class="btn btn-secondary" data-overview-view-section hidden>Ver sección</button></div></dialog>
+    <dialog id="overview-detail-dialog" aria-labelledby="overview-detail-title" aria-describedby="overview-detail-summary">
+      <div class="overview-detail-heading">
+        <div class="overview-detail-titles-wrap">
+          <h2 id="overview-detail-title"></h2>
+          <div id="overview-detail-value"></div>
+          <p id="overview-detail-summary"></p>
+        </div>
+        <button type="button" class="dialog-close-btn" data-overview-close aria-label="Cerrar ventana">✕</button>
+      </div>
+      <div id="overview-detail-content"></div>
+      <div class="overview-detail-actions">
+        <button type="button" class="btn btn-secondary" data-overview-close>Cerrar</button>
+        <button type="button" class="btn btn-primary" data-overview-view-section hidden>Ver sección</button>
+      </div>
+    </dialog>
 
     <!-- Task Detail Modal Dialog -->
     <dialog id="task-detail-dialog" aria-labelledby="task-detail-title" aria-describedby="task-detail-note">
@@ -4164,7 +4315,24 @@
       var sectionCards = model.sections.map(function (section) {
         if (!section.items.length) return '';
         var itemsHtml = section.items.map(function (item) {
-          return '<li>' + esc(item) + '</li>';
+          var str = String(item || '');
+          if (str.includes(' · ')) {
+            var parts = str.split(' · ');
+            var left = parts[0];
+            var right = parts.slice(1).join(' · ');
+            var st = normalizeStatus(right);
+            if (st === 'completed' || st === 'in-progress' || st === 'pending' || st === 'blocked') {
+              return '<li class="overview-meta-item">'
+                + '<span class="overview-meta-item-title">' + esc(left) + '</span>'
+                + '<span class="badge ' + statusBadgeClass(st) + '"><span class="badge-dot ' + statusDotClass(st) + '"></span> ' + statusLabel(st) + '</span>'
+                + '</li>';
+            }
+            return '<li class="overview-meta-item">'
+              + '<span class="overview-meta-item-title">' + esc(left) + '</span>'
+              + '<span class="overview-meta-item-sub">' + esc(right) + '</span>'
+              + '</li>';
+          }
+          return '<li class="overview-meta-item"><span>' + esc(str) + '</span></li>';
         }).join('');
         return '<section class="overview-detail-section overview-meta-group">'
           + '<h3>' + esc(section.label) + '</h3>'
