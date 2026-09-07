@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { exec } from "node:child_process";
+import { exec, execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import type { TaskManagerState, TaskStatus, Task, TodoItem } from "./types.js";
 import {
@@ -270,6 +270,7 @@ export class TaskManager {
 
   /**
    * Opens Task-Manager-Portable.html in default system web browser.
+   * Supports macOS, Windows, Linux, and WSL2 environments seamlessly.
    */
   openInBrowser(): Promise<{ success: boolean; message: string }> {
     return new Promise((resolve) => {
@@ -284,12 +285,61 @@ export class TaskManager {
       const platform = process.platform;
       let cmd = "";
 
+      const isWsl = (): boolean => {
+        if (platform !== "linux") return false;
+        if (process.env.WSL_DISTRO_NAME || process.env.WSL_INTEROP) return true;
+        try {
+          const v = fs.readFileSync("/proc/version", "utf-8");
+          return /microsoft|wsl/i.test(v);
+        } catch {
+          return false;
+        }
+      };
+
       if (platform === "darwin") {
         cmd = `open "${fileUrl}"`;
       } else if (platform === "win32") {
         cmd = `start "" "${fileUrl}"`;
+      } else if (isWsl()) {
+        // In WSL2, open in the Windows host default browser
+        let hasWslView = false;
+        try {
+          execSync("which wslview", { stdio: "ignore" });
+          hasWslView = true;
+        } catch {}
+
+        if (hasWslView) {
+          cmd = `wslview "${this.targetFilePath}"`;
+        } else {
+          try {
+            const winPath = execSync(`wslpath -w "${this.targetFilePath}"`, {
+              encoding: "utf-8",
+              stdio: ["pipe", "pipe", "ignore"],
+            }).trim();
+            const escapedWinPath = winPath.replace(/'/g, "''");
+            cmd = `powershell.exe -NoProfile -Command "Start-Process '${escapedWinPath}'"`;
+          } catch {
+            cmd = `/mnt/c/Windows/explorer.exe "${this.targetFilePath}"`;
+          }
+        }
       } else {
-        cmd = `xdg-open "${fileUrl}"`;
+        // Standard Linux: xdg-open -> sensible-browser -> python3
+        let hasXdg = false;
+        try {
+          execSync("which xdg-open", { stdio: "ignore" });
+          hasXdg = true;
+        } catch {}
+
+        if (hasXdg) {
+          cmd = `xdg-open "${fileUrl}"`;
+        } else {
+          try {
+            execSync("which sensible-browser", { stdio: "ignore" });
+            cmd = `sensible-browser "${this.targetFilePath}"`;
+          } catch {
+            cmd = `python3 -m webbrowser "${fileUrl}"`;
+          }
+        }
       }
 
       exec(cmd, (error) => {

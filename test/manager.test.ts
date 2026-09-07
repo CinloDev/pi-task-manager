@@ -84,4 +84,12 @@ describe("TaskManager Core Service", () => {
     const toggled = state.todos.find((td) => td.id === found!.id);
     expect(toggled?.done).toBe(true);
   });
+
+  it("handles openInBrowser gracefully without throw", async () => {
+    manager.init();
+    const res = await manager.openInBrowser();
+    expect(res).toBeDefined();
+    expect(typeof res.message).toBe("string");
+    expect(typeof res.success).toBe("boolean");
+  });
 });
