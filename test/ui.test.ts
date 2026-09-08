@@ -120,4 +120,32 @@ describe("TaskManagerModalOverlay TUI Component", () => {
     lines = overlay.render(70);
     expect(lines.join("\n")).toContain("Abrir dashboard");
   });
+
+  it("normalizes terminal navigation keys across SS3, Kitty, and xterm protocols", async () => {
+    const { normalizeModalKey } = await import("../src/ui.js");
+
+    // Standard vs SS3 arrows
+    expect(normalizeModalKey("\x1b[A")).toBe("up");
+    expect(normalizeModalKey("\x1bOA")).toBe("up");
+    expect(normalizeModalKey("\x1b[1;1A")).toBe("up");
+    expect(normalizeModalKey("k")).toBe("up");
+
+    expect(normalizeModalKey("\x1b[B")).toBe("down");
+    expect(normalizeModalKey("\x1bOB")).toBe("down");
+    expect(normalizeModalKey("\x1b[1;1B")).toBe("down");
+    expect(normalizeModalKey("j")).toBe("down");
+
+    // Enter & Keypad Enter
+    expect(normalizeModalKey("\r")).toBe("enter");
+    expect(normalizeModalKey("\n")).toBe("enter");
+    expect(normalizeModalKey("\x1bOM")).toBe("enter");
+
+    // Navigation & paging
+    expect(normalizeModalKey("\x1b[5~")).toBe("pageup");
+    expect(normalizeModalKey("\x1b[6~")).toBe("pagedown");
+    expect(normalizeModalKey("\x1b[H")).toBe("home");
+    expect(normalizeModalKey("\x1bOH")).toBe("home");
+    expect(normalizeModalKey("\x1b[F")).toBe("end");
+    expect(normalizeModalKey("\x1bOF")).toBe("end");
+  });
 });
