@@ -9,7 +9,7 @@
     "harness": "Pi",
     "harnessRole": "Coding Agent Harness",
     "description": "Pi extension and standalone portable HTML dashboard for project task and SDD phase management",
-    "lastUpdated": "2026-09-08T00:00:23.076Z",
+    "lastUpdated": "2026-09-08T00:54:29.520Z",
     "labels": {
       "es": {
         "overallProgress": "Progreso Global",
@@ -514,17 +514,17 @@
   "tokenUsage": {
     "hasData": true,
     "schemaVersion": "1.0",
-    "updatedAt": "2026-09-08T00:00:23.076Z",
+    "updatedAt": "2026-09-08T00:54:29.520Z",
     "source": "pi-runtime",
     "scope": "pi-task-manager",
     "root": "",
     "totals": {
-      "input": 4742394,
-      "output": 67880,
+      "input": 5973251,
+      "output": 77786,
       "reasoning": 26436,
-      "cacheRead": 96570310,
+      "cacheRead": 115529753,
       "cacheWrite": 0,
-      "total": 101380584,
+      "total": 121580790,
       "cost": 0
     },
     "byAgent": [
@@ -556,19 +556,19 @@
         "models": [
           "cinlo/gemini-3.8-flash-high"
         ],
-        "total": 27595912,
+        "total": 47796118,
         "cost": 0,
-        "messages": 53,
+        "messages": 90,
         "sessions": 1,
         "evidence": "measured",
         "confidence": 1,
         "categories": {
-          "input": 219009,
-          "output": 9448,
+          "input": 1449866,
+          "output": 19354,
           "reasoning": 0,
-          "cacheRead": 27367455,
+          "cacheRead": 46326898,
           "cacheWrite": 0,
-          "total": 27595912
+          "total": 47796118
         }
       }
     ]

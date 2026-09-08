@@ -162,6 +162,65 @@ export function padEndVisible(str: string, targetWidth: number): string {
   return res + "\x1b[0m";
 }
 
+export function normalizeModalKey(data: string): string {
+  // Enter (standard CR/LF, numpad keypad SS3)
+  if (data === "\r" || data === "\n" || data === "\u001bOM") return "enter";
+
+  // Escape / Cancel / Abort
+  if (data === "\x1b" || data === "\u001b" || data === "\x03") return "esc";
+
+  // Arrow Up (CSI standard, SS3 application mode, xterm modified, linux console, Vim k)
+  if (
+    data === "\x1b[A" ||
+    data === "\u001b[A" ||
+    data === "\x1bOA" ||
+    data === "\u001bOA" ||
+    data === "\x1b[1;1A" ||
+    data === "\x1b[a" ||
+    data === "k" ||
+    data === "K"
+  ) {
+    return "up";
+  }
+
+  // Arrow Down (CSI standard, SS3 application mode, xterm modified, linux console, Vim j)
+  if (
+    data === "\x1b[B" ||
+    data === "\u001b[B" ||
+    data === "\x1bOB" ||
+    data === "\u001bOB" ||
+    data === "\x1b[1;1B" ||
+    data === "\x1b[b" ||
+    data === "j" ||
+    data === "J"
+  ) {
+    return "down";
+  }
+
+  // Arrow Right / Left
+  if (data === "\x1b[C" || data === "\u001b[C" || data === "\x1bOC" || data === "\u001bOC") return "right";
+  if (data === "\x1b[D" || data === "\u001b[D" || data === "\x1bOD" || data === "\u001bOD") return "left";
+
+  // Page Up / Down
+  if (data === "\x1b[5~" || data === "\u001b[5~") return "pageup";
+  if (data === "\x1b[6~" || data === "\u001b[6~") return "pagedown";
+
+  // Home / End
+  if (data === "\x1b[H" || data === "\u001b[H" || data === "\x1bOH" || data === "\u001bOH" || data === "\x1b[1~") return "home";
+  if (data === "\x1b[F" || data === "\u001b[F" || data === "\x1bOF" || data === "\u001bOF" || data === "\x1b[4~") return "end";
+
+  // Tab
+  if (data === "\t") return "tab";
+
+  // Backspace / Delete
+  if (data === "\x7f" || data === "\b" || data === "\x1b[3~" || data === "\u001b[3~") return "backspace";
+
+  // Space
+  if (data === " ") return "space";
+
+  return data;
+}
+
 export class TaskManagerModalOverlay {
   private title: string;
   private manager: TaskManager | null = null;
@@ -294,24 +353,34 @@ export class TaskManagerModalOverlay {
   }
 
   private handleMenuInput(data: string): void {
+    const key = normalizeModalKey(data);
     const items = this.getMenuItems();
 
-    // Escape or Ctrl+C -> close modal
-    if (data === "\x1b" || data === "\u001b" || data === "\x03") {
+    if (key === "esc") {
       this.done(undefined);
       return;
     }
 
-    // Up arrow or 'k'
-    if (data === "\x1b[A" || data === "\x1bOA" || data === "k" || data === "K") {
+    if (key === "up") {
       this.selectedMenuIndex = (this.selectedMenuIndex - 1 + items.length) % items.length;
       this.tui?.requestRender?.();
       return;
     }
 
-    // Down arrow or 'j'
-    if (data === "\x1b[B" || data === "\x1bOB" || data === "j" || data === "J") {
+    if (key === "down") {
       this.selectedMenuIndex = (this.selectedMenuIndex + 1) % items.length;
+      this.tui?.requestRender?.();
+      return;
+    }
+
+    if (key === "home") {
+      this.selectedMenuIndex = 0;
+      this.tui?.requestRender?.();
+      return;
+    }
+
+    if (key === "end") {
+      this.selectedMenuIndex = items.length - 1;
       this.tui?.requestRender?.();
       return;
     }
@@ -324,8 +393,7 @@ export class TaskManagerModalOverlay {
       return;
     }
 
-    // Enter -> execute current
-    if (data === "\r" || data === "\n") {
+    if (key === "enter") {
       this.executeMenuItem(items[this.selectedMenuIndex]);
       return;
     }
@@ -418,13 +486,15 @@ export class TaskManagerModalOverlay {
   }
 
   private handleListInput(data: string): void {
-    if (data === "\x1b" || data === "\u001b" || data === "q" || data === "Q") {
+    const key = normalizeModalKey(data);
+
+    if (key === "esc" || data === "q" || data === "Q") {
       this.view = "menu";
       this.tui?.requestRender?.();
       return;
     }
 
-    if (data === "\x1b[A" || data === "k") {
+    if (key === "up") {
       if (this.allListItems.length > 0) {
         this.listSelectionIndex = (this.listSelectionIndex - 1 + this.allListItems.length) % this.allListItems.length;
       }
@@ -432,7 +502,7 @@ export class TaskManagerModalOverlay {
       return;
     }
 
-    if (data === "\x1b[B" || data === "j") {
+    if (key === "down") {
       if (this.allListItems.length > 0) {
         this.listSelectionIndex = (this.listSelectionIndex + 1) % this.allListItems.length;
       }
@@ -440,8 +510,36 @@ export class TaskManagerModalOverlay {
       return;
     }
 
+    if (key === "pageup") {
+      if (this.allListItems.length > 0) {
+        this.listSelectionIndex = Math.max(0, this.listSelectionIndex - 6);
+      }
+      this.tui?.requestRender?.();
+      return;
+    }
+
+    if (key === "pagedown") {
+      if (this.allListItems.length > 0) {
+        this.listSelectionIndex = Math.min(this.allListItems.length - 1, this.listSelectionIndex + 6);
+      }
+      this.tui?.requestRender?.();
+      return;
+    }
+
+    if (key === "home") {
+      this.listSelectionIndex = 0;
+      this.tui?.requestRender?.();
+      return;
+    }
+
+    if (key === "end") {
+      this.listSelectionIndex = Math.max(0, this.allListItems.length - 1);
+      this.tui?.requestRender?.();
+      return;
+    }
+
     // Toggle todo or advance/open task on Enter or Space
-    if (data === "\r" || data === "\n" || data === " ") {
+    if (key === "enter" || key === "space") {
       const item = this.allListItems[this.listSelectionIndex];
       if (!item) return;
 
@@ -460,7 +558,6 @@ export class TaskManagerModalOverlay {
       }
 
       if (item.type === "task") {
-        // Switch to select_status for this task directly
         this.chosenTask = item.task;
         this.view = "select_status";
         const currIndex = this.statusOptions.findIndex((s) => s.status === this.chosenTask?.status);
@@ -472,19 +569,21 @@ export class TaskManagerModalOverlay {
   }
 
   private handleAddTodoInput(data: string): void {
-    if (data === "\x1b" || data === "\u001b") {
+    const key = normalizeModalKey(data);
+
+    if (key === "esc") {
       this.view = "menu";
       this.tui?.requestRender?.();
       return;
     }
 
-    if (data === "\t") {
+    if (key === "tab") {
       this.todoPriorityIndex = (this.todoPriorityIndex + 1) % this.todoPriorityOptions.length;
       this.tui?.requestRender?.();
       return;
     }
 
-    if (data === "\r" || data === "\n") {
+    if (key === "enter") {
       const text = this.todoInput.trim();
       if (!text) {
         this.view = "menu";
@@ -503,7 +602,7 @@ export class TaskManagerModalOverlay {
       return;
     }
 
-    if (data === "\x7f" || data === "\b" || data === "\x1b[3~") {
+    if (key === "backspace") {
       if (this.todoInput.length > 0) {
         this.todoInput = this.todoInput.slice(0, -1);
         this.tui?.requestRender?.();
@@ -519,25 +618,51 @@ export class TaskManagerModalOverlay {
   }
 
   private handleSelectTaskInput(data: string): void {
-    if (data === "\x1b" || data === "\u001b" || data === "b" || data === "B" || data === "q") {
+    const key = normalizeModalKey(data);
+
+    if (key === "esc" || data === "b" || data === "B" || data === "q") {
       this.view = "menu";
       this.tui?.requestRender?.();
       return;
     }
 
-    if (data === "\x1b[A" || data === "k") {
+    if (key === "up") {
       this.selectedTaskIndex = (this.selectedTaskIndex - 1 + this.allTasks.length) % this.allTasks.length;
       this.tui?.requestRender?.();
       return;
     }
 
-    if (data === "\x1b[B" || data === "j") {
+    if (key === "down") {
       this.selectedTaskIndex = (this.selectedTaskIndex + 1) % this.allTasks.length;
       this.tui?.requestRender?.();
       return;
     }
 
-    if (data === "\r" || data === "\n") {
+    if (key === "pageup") {
+      this.selectedTaskIndex = Math.max(0, this.selectedTaskIndex - 5);
+      this.tui?.requestRender?.();
+      return;
+    }
+
+    if (key === "pagedown") {
+      this.selectedTaskIndex = Math.min(this.allTasks.length - 1, this.selectedTaskIndex + 5);
+      this.tui?.requestRender?.();
+      return;
+    }
+
+    if (key === "home") {
+      this.selectedTaskIndex = 0;
+      this.tui?.requestRender?.();
+      return;
+    }
+
+    if (key === "end") {
+      this.selectedTaskIndex = Math.max(0, this.allTasks.length - 1);
+      this.tui?.requestRender?.();
+      return;
+    }
+
+    if (key === "enter") {
       this.chosenTask = this.allTasks[this.selectedTaskIndex]?.task || null;
       if (this.chosenTask) {
         this.view = "select_status";
@@ -550,19 +675,21 @@ export class TaskManagerModalOverlay {
   }
 
   private handleSelectStatusInput(data: string): void {
-    if (data === "\x1b" || data === "\u001b" || data === "b" || data === "B") {
+    const key = normalizeModalKey(data);
+
+    if (key === "esc" || data === "b" || data === "B") {
       this.view = "select_task";
       this.tui?.requestRender?.();
       return;
     }
 
-    if (data === "\x1b[A" || data === "k") {
+    if (key === "up") {
       this.selectedStatusIndex = (this.selectedStatusIndex - 1 + this.statusOptions.length) % this.statusOptions.length;
       this.tui?.requestRender?.();
       return;
     }
 
-    if (data === "\x1b[B" || data === "j") {
+    if (key === "down") {
       this.selectedStatusIndex = (this.selectedStatusIndex + 1) % this.statusOptions.length;
       this.tui?.requestRender?.();
       return;
@@ -575,7 +702,7 @@ export class TaskManagerModalOverlay {
       return;
     }
 
-    if (data === "\r" || data === "\n") {
+    if (key === "enter") {
       this.applyStatusChange();
       return;
     }
@@ -596,13 +723,15 @@ export class TaskManagerModalOverlay {
   }
 
   private handleConfirmExportInput(data: string): void {
-    if (data === "\x1b" || data === "\u001b" || data === "b" || data === "B" || data === "q") {
+    const key = normalizeModalKey(data);
+
+    if (key === "esc" || data === "b" || data === "B" || data === "q") {
       this.view = "menu";
       this.tui?.requestRender?.();
       return;
     }
 
-    if (data === "\x1b[A" || data === "k" || data === "\x1b[B" || data === "j") {
+    if (key === "up" || key === "down") {
       this.selectedExportChoice = this.selectedExportChoice === 0 ? 1 : 0;
       this.tui?.requestRender?.();
       return;
@@ -620,7 +749,7 @@ export class TaskManagerModalOverlay {
       return;
     }
 
-    if (data === "\r" || data === "\n") {
+    if (key === "enter") {
       if (this.selectedExportChoice === 0) {
         this.executeExport();
       } else {
