@@ -770,46 +770,165 @@ export class TaskManagerModalOverlay {
   invalidate(): void {}
   dispose(): void {}
 
+  private getPalette(): {
+    bgAnsi: string;
+    borderFgAnsi: string;
+    accent: (t: string) => string;
+    highlight: (t: string) => string;
+    heading: (t: string) => string;
+    text: (t: string) => string;
+    muted: (t: string) => string;
+    dim: (t: string) => string;
+    success: (t: string) => string;
+    function: (t: string) => string;
+    warning: (t: string) => string;
+    error: (t: string) => string;
+    bold: (t: string) => string;
+  } {
+    const theme = this.theme;
+
+    const safeFg = (color: string, text: string, fallback = "text"): string => {
+      if (!theme?.fg) return text;
+      try {
+        return theme.fg(color, text);
+      } catch {
+        try {
+          return theme.fg(fallback, text);
+        } catch {
+          return text;
+        }
+      }
+    };
+
+    // Determine solid background ANSI sequence for the modal:
+    // Support environment variable override, then theme tokens, then deep violet fallback
+    let bgAnsi = process.env.PI_TASK_MANAGER_BG || "";
+    if (!bgAnsi && theme?.getBgAnsi) {
+      try {
+        bgAnsi =
+          theme.getBgAnsi("customMessageBg") ||
+          theme.getBgAnsi("toolSuccessBg") ||
+          theme.getBgAnsi("toolPendingBg") ||
+          "";
+      } catch {
+        bgAnsi = "";
+      }
+    }
+    if (!bgAnsi) {
+      bgAnsi = "\x1b[48;2;20;10;40m"; // Pure Obsidian deep violet #140a28 fallback
+    }
+
+    // Determine border foreground ANSI sequence:
+    // Support environment variable override, then theme tokens, then bright violet fallback
+    let borderFgAnsi = process.env.PI_TASK_MANAGER_BORDER || "";
+    if (!borderFgAnsi && theme?.getFgAnsi) {
+      try {
+        borderFgAnsi = theme.getFgAnsi("border") || theme.getFgAnsi("borderAccent") || "";
+      } catch {
+        borderFgAnsi = "";
+      }
+    }
+    if (!borderFgAnsi) {
+      borderFgAnsi = "\x1b[38;2;168;85;247m"; // Bright purple border #a855f7 fallback
+    }
+
+    const bold = (t: string) => (theme?.bold ? theme.bold(t) : `\x1b[1m${t}\x1b[22m`);
+
+    // When no theme is supplied, return rich Obsidian palette preserving ANSI codes
+    if (!theme) {
+      return {
+        bgAnsi,
+        borderFgAnsi,
+        accent: (t) => `\x1b[38;2;216;180;254m${t}\x1b[0m`,
+        highlight: (t) => `\x1b[38;2;250;204;21m${t}\x1b[0m`,
+        heading: (t) => `\x1b[38;2;240;225;255m\x1b[1m${t}\x1b[0m`,
+        text: (t) => `\x1b[38;2;255;255;255m${t}\x1b[0m`,
+        muted: (t) => `\x1b[38;2;167;139;250m${t}\x1b[0m`,
+        dim: (t) => `\x1b[38;2;118;97;107m${t}\x1b[0m`,
+        success: (t) => `\x1b[38;2;74;222;128m${t}\x1b[0m`,
+        function: (t) => `\x1b[38;2;96;165;250m${t}\x1b[0m`,
+        warning: (t) => `\x1b[38;2;251;191;36m${t}\x1b[0m`,
+        error: (t) => `\x1b[38;2;248;113;113m${t}\x1b[0m`,
+        bold,
+      };
+    }
+
+    return {
+      bgAnsi,
+      borderFgAnsi,
+      accent: (t) => safeFg("accent", t, "text"),
+      highlight: (t) => safeFg("borderAccent", t, "accent"),
+      heading: (t) => safeFg("mdHeading", t, "accent"),
+      text: (t) => safeFg("text", t, "text"),
+      muted: (t) => safeFg("muted", t, "text"),
+      dim: (t) => safeFg("dim", t, "muted"),
+      success: (t) => safeFg("success", t, "text"),
+      function: (t) => safeFg("syntaxFunction", t, "accent"),
+      warning: (t) => safeFg("warning", t, "accent"),
+      error: (t) => safeFg("error", t, "accent"),
+      bold,
+    };
+  }
+
   render(termWidth: number): string[] {
     // Generous width so lines and task titles do not truncate prematurely
     const boxWidth = Math.max(60, Math.min(86, termWidth - 4));
     const innerW = boxWidth - 2;
 
-    // Rich Obsidian Dark Violet Palette
-    const BG_VIOLET = "\x1b[48;2;20;10;40m";       // Pure Obsidian deep violet #140a28
-    const FG_BORDER = "\x1b[38;2;168;85;247m";      // Bright purple border #a855f7
-    const FG_TITLE = "\x1b[38;2;240;225;255m\x1b[1m"; // Crisp white-violet bold
-    const FG_ACCENT = "\x1b[38;2;216;180;254m";     // Lavender accent #d8b4fe
-    const FG_MUTED = "\x1b[38;2;167;139;250m";      // Muted violet #a78bfa
-    const FG_WHITE = "\x1b[38;2;255;255;255m";
-    const FG_GREEN = "\x1b[38;2;74;222;128m";
-    const FG_BLUE = "\x1b[38;2;96;165;250m";
-    const FG_AMBER = "\x1b[38;2;251;191;36m";
-    const FG_RED = "\x1b[38;2;248;113;113m";
+    const palette = this.getPalette();
     const RESET = "\x1b[0m";
 
     const topDouble = (titleStr: string) => {
       const vis = getVisibleWidth(titleStr);
       const leftW = Math.max(2, Math.floor((innerW - vis) / 2));
       const rightW = Math.max(2, innerW - vis - leftW);
-      return BG_VIOLET + FG_BORDER + "╔" + "═".repeat(leftW) + RESET + BG_VIOLET + titleStr + RESET + BG_VIOLET + FG_BORDER + "═".repeat(rightW) + "╗" + RESET;
+      const solidTitle = titleStr.replace(/\x1b\[0m/g, "\x1b[0m" + palette.bgAnsi);
+      return (
+        palette.bgAnsi +
+        palette.borderFgAnsi +
+        "╔" +
+        "═".repeat(leftW) +
+        RESET +
+        palette.bgAnsi +
+        solidTitle +
+        RESET +
+        palette.bgAnsi +
+        palette.borderFgAnsi +
+        "═".repeat(rightW) +
+        "╗" +
+        RESET
+      );
     };
 
-    const midDouble = () => BG_VIOLET + FG_BORDER + "╠" + "═".repeat(innerW) + "╣" + RESET;
-    const botDouble = () => BG_VIOLET + FG_BORDER + "╚" + "═".repeat(innerW) + "╝" + RESET;
+    const midDouble = () =>
+      palette.bgAnsi + palette.borderFgAnsi + "╠" + "═".repeat(innerW) + "╣" + RESET;
+    const botDouble = () =>
+      palette.bgAnsi + palette.borderFgAnsi + "╚" + "═".repeat(innerW) + "╝" + RESET;
 
-    // Keep solid violet background across all text segments without letting \x1b[0m punch transparent holes
+    // Keep solid theme background across all text segments without letting \x1b[0m punch transparent holes
     const row = (content: string) => {
-      const solidContent = content.replace(/\x1b\[0m/g, "\x1b[0m" + BG_VIOLET);
-      return BG_VIOLET + FG_BORDER + "║" + RESET + BG_VIOLET + padEndVisible(" " + solidContent, innerW) + RESET + BG_VIOLET + FG_BORDER + "║" + RESET;
+      const solidContent = content.replace(/\x1b\[0m/g, "\x1b[0m" + palette.bgAnsi);
+      return (
+        palette.bgAnsi +
+        palette.borderFgAnsi +
+        "║" +
+        RESET +
+        palette.bgAnsi +
+        padEndVisible(" " + solidContent, innerW) +
+        RESET +
+        palette.bgAnsi +
+        palette.borderFgAnsi +
+        "║" +
+        RESET
+      );
     };
 
     const emptyRow = () => row("");
 
     const lines: string[] = [];
 
-    // Header with double borders and violet background
-    const titleBar = `${FG_TITLE} 🗂️  ${this.title} ${RESET}`;
+    // Header with double borders and theme background
+    const titleBar = ` ${palette.heading(palette.bold(`🗂️  ${this.title}`))} `;
     lines.push(topDouble(titleBar));
     lines.push(emptyRow());
 
@@ -832,16 +951,33 @@ export class TaskManagerModalOverlay {
       const filledLen = Math.round((pct / 100) * barLen);
       const bar = "█".repeat(filledLen) + "░".repeat(barLen - filledLen);
 
-      lines.push(row(`  ${FG_WHITE}\x1b[1m${meta.projectName}\x1b[0m ${FG_MUTED}(v${meta.version || "1.0.0"}) · 🌿 ${branch}`));
-      lines.push(row(`  ${FG_GREEN}${bar}${RESET} ${FG_WHITE}${pct}%${RESET} ${FG_MUTED}(${completed}/${totalTasks} completadas · ${inProg} en progreso)`));
+      lines.push(
+        row(
+          `  ${palette.text(palette.bold(meta.projectName))} ${palette.muted(
+            `(v${meta.version || "1.0.0"}) · 🌿 ${branch}`
+          )}`
+        )
+      );
+      lines.push(
+        row(
+          `  ${palette.success(bar)} ${palette.text(`${pct}%`)} ${palette.muted(
+            `(${completed}/${totalTasks} completadas · ${inProg} en progreso)`
+          )}`
+        )
+      );
       lines.push(midDouble());
     }
 
     // Status / Notification Banner if active
     if (this.banner) {
-      const icon = this.banner.type === "success" ? `${FG_GREEN}✔` : this.banner.type === "warning" ? `${FG_AMBER}▲` : `${FG_BLUE}ℹ`;
+      const icon =
+        this.banner.type === "success"
+          ? `${palette.success("✔")}`
+          : this.banner.type === "warning"
+          ? `${palette.warning("▲")}`
+          : `${palette.function("ℹ")}`;
       lines.push(emptyRow());
-      lines.push(row(` ${icon} ${FG_WHITE}${this.banner.text}${RESET}`));
+      lines.push(row(` ${icon} ${palette.text(this.banner.text)}`));
       lines.push(emptyRow());
       lines.push(midDouble());
     }
@@ -849,22 +985,22 @@ export class TaskManagerModalOverlay {
     // Switch view content
     switch (this.view) {
       case "menu":
-        lines.push(...this.renderMenuView(row, emptyRow, FG_ACCENT, FG_MUTED, FG_WHITE, RESET));
+        lines.push(...this.renderMenuView(row, emptyRow, palette));
         break;
       case "list":
-        lines.push(...this.renderListView(row, emptyRow, innerW, FG_ACCENT, FG_MUTED, FG_WHITE, FG_GREEN, FG_BLUE, FG_AMBER, FG_RED, RESET));
+        lines.push(...this.renderListView(row, emptyRow, innerW, palette));
         break;
       case "add_todo":
-        lines.push(...this.renderAddTodoView(row, emptyRow, FG_ACCENT, FG_MUTED, FG_WHITE, FG_GREEN, RESET));
+        lines.push(...this.renderAddTodoView(row, emptyRow, palette));
         break;
       case "select_task":
-        lines.push(...this.renderSelectTaskView(row, emptyRow, FG_ACCENT, FG_MUTED, FG_WHITE, FG_GREEN, FG_BLUE, FG_AMBER, FG_RED, RESET));
+        lines.push(...this.renderSelectTaskView(row, emptyRow, palette));
         break;
       case "select_status":
-        lines.push(...this.renderSelectStatusView(row, emptyRow, FG_ACCENT, FG_MUTED, FG_WHITE, RESET));
+        lines.push(...this.renderSelectStatusView(row, emptyRow, palette));
         break;
       case "confirm_export":
-        lines.push(...this.renderConfirmExportView(row, emptyRow, FG_ACCENT, FG_MUTED, FG_WHITE, FG_GREEN, FG_AMBER, RESET));
+        lines.push(...this.renderConfirmExportView(row, emptyRow, palette));
         break;
     }
 
@@ -878,7 +1014,7 @@ export class TaskManagerModalOverlay {
     if (this.view === "select_status") helper = " ↑/↓/1-4: Seleccionar estado · Enter: Confirmar · Esc: Atrás";
     if (this.view === "confirm_export") helper = " ↑/↓/1-2: Seleccionar · Enter: Confirmar · Esc: Cancelar y volver";
 
-    lines.push(row(` ${FG_MUTED}${helper}${RESET}`));
+    lines.push(row(` ${palette.muted(helper)}`));
     lines.push(botDouble());
 
     return lines;
@@ -887,10 +1023,7 @@ export class TaskManagerModalOverlay {
   private renderMenuView(
     row: (s: string) => string,
     emptyRow: () => string,
-    FG_ACCENT: string,
-    FG_MUTED: string,
-    FG_WHITE: string,
-    RESET: string
+    palette: ReturnType<typeof this.getPalette>
   ): string[] {
     const lines: string[] = [emptyRow()];
     const items = this.getMenuItems();
@@ -901,9 +1034,9 @@ export class TaskManagerModalOverlay {
       const prefix = `[${i + 1}] `;
 
       if (isSel) {
-        lines.push(row(` ${FG_ACCENT}\x1b[1m❯ ${prefix}${item}${RESET}`));
+        lines.push(row(` ${palette.highlight("❯")} ${palette.accent(palette.bold(`${prefix}${item}`))}`));
       } else {
-        lines.push(row(`   ${FG_MUTED}${prefix}${FG_WHITE}${item}${RESET}`));
+        lines.push(row(`   ${palette.muted(prefix)}${palette.text(item)}`));
       }
     }
 
@@ -915,22 +1048,15 @@ export class TaskManagerModalOverlay {
     row: (s: string) => string,
     emptyRow: () => string,
     _innerW: number,
-    FG_ACCENT: string,
-    FG_MUTED: string,
-    FG_WHITE: string,
-    FG_GREEN: string,
-    FG_BLUE: string,
-    FG_AMBER: string,
-    FG_RED: string,
-    RESET: string
+    palette: ReturnType<typeof this.getPalette>
   ): string[] {
     const lines: string[] = [emptyRow()];
-    lines.push(row(` ${FG_ACCENT}\x1b[1m📋 Lista Interactiva de Fases, Tareas y Todos${RESET}`));
-    lines.push(row(`   ${FG_MUTED}Enter / Espacio: cambiar estado de tarea o marcar/desmarcar Todo${RESET}`));
+    lines.push(row(` ${palette.heading(palette.bold("📋 Lista Interactiva de Fases, Tareas y Todos"))}`));
+    lines.push(row(`   ${palette.muted("Enter / Espacio: cambiar estado de tarea o marcar/desmarcar Todo")}`));
     lines.push(emptyRow());
 
     if (!this.state || !this.allListItems.length) {
-      lines.push(row(`   ${FG_MUTED}Sin elementos registrados todavía.${RESET}`));
+      lines.push(row(`   ${palette.muted("Sin elementos registrados todavía.")}`));
       lines.push(emptyRow());
       return lines;
     }
@@ -956,27 +1082,51 @@ export class TaskManagerModalOverlay {
         if (item.phase.id !== lastPhaseId) {
           lastPhaseId = item.phase.id;
           const doneCount = item.phase.tasks.filter((t) => t.status === "completed").length;
-          lines.push(row(` ${FG_MUTED}\x1b[1m🔹 Fase ${item.phase.number}: ${item.phase.title} [${doneCount}/${item.phase.tasks.length}]${RESET}`));
+          lines.push(
+            row(
+              ` ${palette.muted(
+                palette.bold(`🔹 Fase ${item.phase.number}: ${item.phase.title} [${doneCount}/${item.phase.tasks.length}]`)
+              )}`
+            )
+          );
         }
 
         const t = item.task;
         const isDone = t.status === "completed";
-        const icon = isDone ? `${FG_GREEN}✔` : t.status === "in_progress" ? `${FG_BLUE}🔄` : t.status === "blocked" ? `${FG_RED}⛔` : `${FG_AMBER}⏳`;
-        const tag = t.tag ? ` ${FG_MUTED}(${t.tag})${RESET}` : "";
-        const owner = t.owner ? ` ${FG_MUTED}@${t.owner}${RESET}` : "";
+        const icon = isDone
+          ? palette.success("✔")
+          : t.status === "in_progress"
+          ? palette.function("🔄")
+          : t.status === "blocked"
+          ? palette.error("⛔")
+          : palette.warning("⏳");
+        const tag = t.tag ? ` ${palette.muted(`(${t.tag})`)}` : "";
+        const owner = t.owner ? ` ${palette.muted(`@${t.owner}`)}` : "";
 
         if (isSelected) {
-          lines.push(row(` ${FG_ACCENT}\x1b[1m❯ [${t.id}] ${icon} ${t.title}${tag}${owner} \x1b[38;2;250;204;21m↵ editar${RESET}`));
+          lines.push(
+            row(
+              ` ${palette.highlight("❯")} [${t.id}] ${icon} ${palette.accent(palette.bold(t.title))}${tag}${owner} ${palette.warning(
+                "↵ editar"
+              )}`
+            )
+          );
         } else {
-          lines.push(row(`   [${t.id}] ${icon} ${FG_WHITE}${t.title}${tag}${owner}${RESET}`));
+          lines.push(row(`   [${t.id}] ${icon} ${palette.text(t.title)}${tag}${owner}`));
         }
       } else {
         const td = item.todo;
-        const check = td.done ? `${FG_GREEN}[✔] HECHO` : `${FG_AMBER}[ ] PENDIENTE`;
+        const check = td.done ? palette.success("[✔] HECHO") : palette.warning("[ ] PENDIENTE");
         if (isSelected) {
-          lines.push(row(` ${FG_ACCENT}\x1b[1m❯ 📌 [${td.priority}] ${check} ${td.text} \x1b[38;2;250;204;21m↵ tildar${RESET}`));
+          lines.push(
+            row(
+              ` ${palette.highlight("❯")} 📌 [${td.priority}] ${check} ${palette.accent(palette.bold(td.text))} ${palette.warning(
+                "↵ tildar"
+              )}`
+            )
+          );
         } else {
-          lines.push(row(`   📌 ${FG_MUTED}[${td.priority}]${RESET} ${check} ${FG_WHITE}${td.text}${RESET}`));
+          lines.push(row(`   📌 ${palette.muted(`[${td.priority}]`)} ${check} ${palette.text(td.text)}`));
         }
       }
     }
@@ -984,7 +1134,7 @@ export class TaskManagerModalOverlay {
     if (this.allListItems.length > windowSize) {
       const pos = `${this.listSelectionIndex + 1}/${this.allListItems.length}`;
       lines.push(emptyRow());
-      lines.push(row(`  ${FG_MUTED}--- Elemento ${pos} (↑/↓ para moverte · Enter para accionar) ---${RESET}`));
+      lines.push(row(`  ${palette.muted(`--- Elemento ${pos} (↑/↓ para moverte · Enter para accionar) ---`)}`));
     } else {
       lines.push(emptyRow());
     }
@@ -995,29 +1145,27 @@ export class TaskManagerModalOverlay {
   private renderAddTodoView(
     row: (s: string) => string,
     emptyRow: () => string,
-    FG_ACCENT: string,
-    FG_MUTED: string,
-    FG_WHITE: string,
-    FG_GREEN: string,
-    RESET: string
+    palette: ReturnType<typeof this.getPalette>
   ): string[] {
     const lines: string[] = [emptyRow()];
-    lines.push(row(` ${FG_ACCENT}\x1b[1m➕ Agregar Nueva Tarea Rápida (Todo)${RESET}`));
+    lines.push(row(` ${palette.heading(palette.bold("➕ Agregar Nueva Tarea Rápida (Todo)"))}`));
     lines.push(emptyRow());
-    lines.push(row(`   ${FG_MUTED}Escribí la descripción de la tarea:${RESET}`));
+    lines.push(row(`   ${palette.muted("Escribí la descripción de la tarea:")}`));
     lines.push(emptyRow());
-    lines.push(row(`   ${FG_GREEN}❯ ${FG_WHITE}\x1b[4m${this.todoInput || " "}\x1b[0m${RESET}${FG_ACCENT}█${RESET}`));
+    lines.push(row(`   ${palette.success("❯")} ${palette.text(`\x1b[4m${this.todoInput || " "}\x1b[0m`)}${palette.accent("█")}`));
     lines.push(emptyRow());
 
     // Priority selector preview
-    const prioOptions = this.todoPriorityOptions.map((opt, i) => {
-      const isSel = i === this.todoPriorityIndex;
-      return isSel ? `\x1b[38;2;250;204;21m\x1b[1m[${opt}]\x1b[0m` : `${FG_MUTED}${opt}${RESET}`;
-    }).join(" · ");
+    const prioOptions = this.todoPriorityOptions
+      .map((opt, i) => {
+        const isSel = i === this.todoPriorityIndex;
+        return isSel ? palette.warning(palette.bold(`[${opt}]`)) : palette.muted(opt);
+      })
+      .join(" · ");
 
-    lines.push(row(`   ${FG_MUTED}Prioridad asignada: ${prioOptions} (Tab: cambiar)${RESET}`));
+    lines.push(row(`   ${palette.muted(`Prioridad asignada: ${prioOptions} (Tab: cambiar)`)}`));
     lines.push(emptyRow());
-    lines.push(row(`   ${FG_MUTED}Presioná Enter para guardar o Escape para cancelar.${RESET}`));
+    lines.push(row(`   ${palette.muted("Presioná Enter para guardar o Escape para cancelar.")}`));
     lines.push(emptyRow());
     return lines;
   }
@@ -1025,34 +1173,43 @@ export class TaskManagerModalOverlay {
   private renderSelectTaskView(
     row: (s: string) => string,
     emptyRow: () => string,
-    FG_ACCENT: string,
-    FG_MUTED: string,
-    FG_WHITE: string,
-    FG_GREEN: string,
-    FG_BLUE: string,
-    FG_AMBER: string,
-    FG_RED: string,
-    RESET: string
+    palette: ReturnType<typeof this.getPalette>
   ): string[] {
     const lines: string[] = [emptyRow()];
-    lines.push(row(` ${FG_ACCENT}\x1b[1m✏️ Seleccionar Tarea para Actualizar Estado${RESET}`));
+    lines.push(row(` ${palette.heading(palette.bold("✏️ Seleccionar Tarea para Actualizar Estado"))}`));
     lines.push(emptyRow());
 
     const windowSize = 8;
-    const scroll = Math.max(0, Math.min(this.selectedTaskIndex - Math.floor(windowSize / 2), this.allTasks.length - windowSize));
+    const scroll = Math.max(
+      0,
+      Math.min(this.selectedTaskIndex - Math.floor(windowSize / 2), this.allTasks.length - windowSize)
+    );
     const visibleTasks = this.allTasks.slice(scroll, scroll + windowSize);
 
     for (let i = 0; i < visibleTasks.length; i++) {
       const idx = scroll + i;
       const isSel = idx === this.selectedTaskIndex;
       const { task } = visibleTasks[i];
-      const stColor = task.status === "completed" ? FG_GREEN : task.status === "in_progress" ? FG_BLUE : task.status === "blocked" ? FG_RED : FG_AMBER;
+      const stColor =
+        task.status === "completed"
+          ? palette.success
+          : task.status === "in_progress"
+          ? palette.function
+          : task.status === "blocked"
+          ? palette.error
+          : palette.warning;
       const stBadge = `[${task.status}]`;
 
       if (isSel) {
-        lines.push(row(` ${FG_ACCENT}\x1b[1m❯ [${task.id}] ${task.title.slice(0, 34)} ${stColor}${stBadge}${RESET}`));
+        lines.push(
+          row(
+            ` ${palette.highlight("❯")} [${task.id}] ${palette.accent(palette.bold(task.title.slice(0, 34)))} ${stColor(
+              stBadge
+            )}`
+          )
+        );
       } else {
-        lines.push(row(`   ${FG_WHITE}[${task.id}] ${task.title.slice(0, 34)} ${stColor}${stBadge}${RESET}`));
+        lines.push(row(`   [${task.id}] ${palette.text(task.title.slice(0, 34))} ${stColor(stBadge)}`));
       }
     }
 
@@ -1063,16 +1220,19 @@ export class TaskManagerModalOverlay {
   private renderSelectStatusView(
     row: (s: string) => string,
     emptyRow: () => string,
-    FG_ACCENT: string,
-    FG_MUTED: string,
-    FG_WHITE: string,
-    RESET: string
+    palette: ReturnType<typeof this.getPalette>
   ): string[] {
     const lines: string[] = [emptyRow()];
     if (!this.chosenTask) return lines;
 
-    lines.push(row(` ${FG_ACCENT}\x1b[1m✏️ Cambiar Estado: [${this.chosenTask.id}] ${this.chosenTask.title.slice(0, 32)}${RESET}`));
-    lines.push(row(`   ${FG_MUTED}Estado actual: ${this.chosenTask.status}${RESET}`));
+    lines.push(
+      row(
+        ` ${palette.heading(
+          palette.bold(`✏️ Cambiar Estado: [${this.chosenTask.id}] ${this.chosenTask.title.slice(0, 32)}`)
+        )}`
+      )
+    );
+    lines.push(row(`   ${palette.muted(`Estado actual: ${this.chosenTask.status}`)}`));
     lines.push(emptyRow());
 
     for (let i = 0; i < this.statusOptions.length; i++) {
@@ -1081,9 +1241,11 @@ export class TaskManagerModalOverlay {
       const numPrefix = `[${i + 1}] `;
 
       if (isSel) {
-        lines.push(row(` ${FG_ACCENT}\x1b[1m❯ ${numPrefix}${opt.label} (${opt.status})${RESET}`));
+        lines.push(
+          row(` ${palette.highlight("❯")} ${palette.accent(palette.bold(`${numPrefix}${opt.label} (${opt.status})`))}`)
+        );
       } else {
-        lines.push(row(`   ${FG_MUTED}${numPrefix}${FG_WHITE}${opt.label} (${opt.status})${RESET}`));
+        lines.push(row(`   ${palette.muted(numPrefix)}${palette.text(`${opt.label} (${opt.status})`)}`));
       }
     }
 
@@ -1094,21 +1256,22 @@ export class TaskManagerModalOverlay {
   private renderConfirmExportView(
     row: (s: string) => string,
     emptyRow: () => string,
-    FG_ACCENT: string,
-    FG_MUTED: string,
-    FG_WHITE: string,
-    FG_GREEN: string,
-    FG_AMBER: string,
-    RESET: string
+    palette: ReturnType<typeof this.getPalette>
   ): string[] {
     const lines: string[] = [emptyRow()];
-    lines.push(row(` ${FG_ACCENT}\x1b[1m📦 Exportar Dashboard como HTML Autónomo${RESET}`));
+    lines.push(row(` ${palette.heading(palette.bold("📦 Exportar Dashboard como HTML Autónomo"))}`));
     lines.push(emptyRow());
-    lines.push(row(`   ${FG_AMBER}⚠️  Atención:${RESET} ${FG_WHITE}Esto generará un archivo HTML completo (~320 KB) en:${RESET}`));
-    lines.push(row(`   \x1b[38;2;250;204;21m./Task-Manager-Portable.html${RESET}`));
+    lines.push(
+      row(
+        `   ${palette.warning("⚠️  Atención:")} ${palette.text(
+          "Esto generará un archivo HTML completo (~320 KB) en:"
+        )}`
+      )
+    );
+    lines.push(row(`   ${palette.warning("./Task-Manager-Portable.html")}`));
     lines.push(emptyRow());
-    lines.push(row(`   ${FG_MUTED}Úsalo solo si necesitas compartir o publicar el dashboard estático.${RESET}`));
-    lines.push(row(`   ${FG_MUTED}Para uso local en Pi, el visualizador efímero no ensucia tu repo.${RESET}`));
+    lines.push(row(`   ${palette.muted("Úsalo solo si necesitas compartir o publicar el dashboard estático.")}`));
+    lines.push(row(`   ${palette.muted("Para uso local en Pi, el visualizador efímero no ensucia tu repo.")}`));
     lines.push(emptyRow());
 
     const choices = [
@@ -1120,10 +1283,10 @@ export class TaskManagerModalOverlay {
       const isSel = i === this.selectedExportChoice;
       const prefix = `[${i + 1}] `;
       if (isSel) {
-        const color = i === 0 ? FG_GREEN : FG_AMBER;
-        lines.push(row(` ${FG_ACCENT}\x1b[1m❯ ${prefix}${color}${choices[i]}${RESET}`));
+        const choiceColor = i === 0 ? palette.success : palette.warning;
+        lines.push(row(` ${palette.highlight("❯")} ${choiceColor(palette.bold(`${prefix}${choices[i]}`))}`));
       } else {
-        lines.push(row(`   ${FG_MUTED}${prefix}${FG_WHITE}${choices[i]}${RESET}`));
+        lines.push(row(`   ${palette.muted(prefix)}${palette.text(choices[i])}`));
       }
     }
 
