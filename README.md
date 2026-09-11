@@ -1,95 +1,59 @@
 # Pi Task Manager (`pi-task-manager`)
 
-> Technical cockpit, visual dashboard, and Pi coding agent extension for project task tracking, token telemetry, and Spec-Driven Development (SDD) phase management.  
-> **Basado originalmente en el concepto de plugin y dashboard portable de [Ramón (@RamonsDka)](https://github.com/RamonsDka/opencode-sdd-profile-manager), adaptado, rediseñado y evolucionado para la arquitectura moderna de Pi.**
+> Cockpit visual, modal interactivo en terminal y extensión para Pi Coding Agent orientada al seguimiento de tareas, telemetría de tokens y gestión de fases SDD (Spec-Driven Development).  
+> **Inspirado en el concepto original de dashboard portable de [Ramón (@RamonsDka)](https://github.com/RamonsDka/opencode-sdd-profile-manager), rediseñado y evolucionado para la arquitectura moderna de Pi.**
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7+-blue.svg)
 ![Pi Extension](https://img.shields.io/badge/Pi-Extension-purple.svg)
 ![Zero Repo Pollution](https://img.shields.io/badge/Workspace-100%25%20Clean%20JSON-brightgreen.svg)
-![Theme](https://img.shields.io/badge/Theme-Obsidian%20Dark%20Violet-9333ea.svg)
+![Theme](https://img.shields.io/badge/Theme-Dynamic%20Tokens-9333ea.svg)
 
 ---
 
-## 📸 Capturas del Cockpit Visual
+## ⚡ En 30 Segundos: ¿Qué problema resuelve?
 
-### 1. Resumen General / HUD & Métricas del Proyecto
-El centro de comando visual con métricas en vivo, estado de Git, reloj sincronizado, distribución de estados y cobertura informativa:
-
-![HUD y Métricas Generales](public/1.png)
-
-### 2. Telemetría de Consumo de Tokens por Agente & Señales de Atención
-Monitoreo en tiempo real de tokens consumidos (Input, Output, Caché, Razonamiento) y costos exactos en USD desglosados por modelo y agente:
-
-![Telemetría de Tokens y Señales](public/2.png)
-
-### 3. Tablero Kanban por Estado
-Flujo visual dinámico con columnas por estado (*Pendiente*, *En Progreso*, *Bloqueado*, *Completado*) para auditar el avance del sprint:
-
-![Tablero Kanban](public/3.png)
-
-### 4. Desglose de Fases SDD y Tareas Técnicas
-Seguimiento paso a paso de fases de desarrollo (*Setup*, *Core*, *Testing*, *Review RDD*) con subtareas, responsables y commits asociados:
-
-![Fases SDD y Tareas](public/4.png)
+1. **Cero basura en tus repositorios**: Guarda todo el estado del proyecto en un archivo ligero `.pi/task-manager.json` (~3 KB). Se terminaron los archivos HTML gigantes de 7.000 líneas ensuciando tus commits o diffs de Git.
+2. **Modal flotante en tu terminal (`alt+t` / `ctrl+shift+t`)**: Abrí una ventana interactiva en el centro de tu terminal para ver el progreso, tildar tareas con teclado o mouse, y cambiar estados sin salir de Pi.
+3. **Visualizador web efímero (`/task-manager open`)**: Compila al vuelo el dashboard en memoria y lo abre en tu navegador sin crear archivos permanentes en tu proyecto.
+4. **Telemetría real de tokens y costos**: Registra el consumo real de tokens (entrada, salida, caché, razonamiento) y costos en USD desglosados por modelo y agente.
 
 ---
 
-## ✨ Características Principales
+## 📸 Vista Rápida del Dashboard Visual
 
-### 1. Arquitectura Limpia y Cero Contaminación de Repositorios
-* **Tus repositorios quedan 100% limpios**: En los proyectos de trabajo sólo se almacena un archivo liviano `.pi/task-manager.json` (~3 KB).
-* **Sin archivos gigantes**: No se generan archivos HTML monolíticos de 7.000 líneas ensuciando tus commits, Git diffs o estadísticas de lenguaje en GitHub.
-* **Visualizador efímero**: Al ejecutar `/task-manager open`, la interfaz se compila al vuelo en el directorio temporal del sistema (`os.tmpdir()`) y se abre en tu navegador predeterminado (Linux, macOS y WSL2).
-* **Exportación on-demand**: Si necesitas compartir el dashboard estático o publicarlo offline, puedes exportarlo en cualquier momento con `/task-manager export`.
-
-### 2. Modal Flotante TUI en la Terminal (<kbd>alt+t</kbd> / <kbd>ctrl+shift+t</kbd>)
-* **Experiencia de ventana modal interactiva**: Diseñado con bordes dobles Unicode (`╔═╗`, `║`, `╚═╝`) y armonización dinámica con el tema configurado en Pi (`Cinlodev CUTE`, temas oscuros/claros o variables de entorno).
-* **Soporte completo de Mouse**: Navega de forma natural con la rueda del ratón (`wheel`), usa click simple para seleccionar y doble click (o click en el ítem enfocado) para abrir opciones, tildar *Todos* o cambiar estados.
-* **Todo el flujo sin salir del modal**:
-  * 🌐 Abrir el visualizador en el navegador.
-  * 🔄 Sincronizar Git y tareas en vivo.
-  * 📋 **Lista interactiva completa**: Navega con flechas (`↑`/`↓`) o rueda del mouse, y con <kbd>Enter</kbd>, <kbd>Espacio</kbd> o click tilda/destilda Todos o cambia de estado las tareas de fase directamente.
-  * ➕ **Agregar Todos rápidos con prioridades inteligentes**: Detección automática de la siguiente prioridad libre (`P0` → `P1` → `P2` → `P3`) o selección manual mediante <kbd>Tab</kbd>.
-  * ✏️ Modificar estados de tareas con recálculo de progreso inmediato.
-  * 🚪 Salir limpiamente con <kbd>Esc</kbd> o click en la barra de ayuda inferior.
-
-### 3. Telemetría Operativa Real de Tokens y Costos
-* **Medición automática en runtime**: Se suscribe a los eventos del ciclo de vida de Pi (`turn_end`) capturando tokens de entrada, salida, lecturas/escrituras de caché y costo monetario.
-* **Atribución por agente**: Asigna el consumo a la tarea activa o subagente (`sdd-apply`, `sdd-verify`, `Pi`, `Orquestador`).
-* **Sincronización histórica**: Reconcilia la sesión activa desde el `SessionManager` de Pi durante `/task-manager sync`.
-
-### 4. Herramientas Nativas para Agentes y Orquestador
-* `task_manager_read`: Permite a la IA consultar tareas, fases y progreso actual.
-* `task_manager_update_task`: Actualización atómica de estado, notas técnicas, responsables y commits asociados.
-* `task_manager_sync`: Sincronización automática de archivos markdown (`tasks.md` / OpenSpec) y ramas Git.
+| 1. Métricas Generales y HUD | 2. Telemetría de Tokens por Agente |
+|:---:|:---:|
+| ![HUD y Métricas Generales](public/1.png) | ![Telemetría de Tokens](public/2.png) |
+| **3. Tablero Kanban por Estado** | **4. Fases SDD y Tareas Técnicas** |
+| ![Tablero Kanban](public/3.png) | ![Fases SDD y Tareas](public/4.png) |
 
 ---
 
-## 🚀 Instalación y Configuración en Pi
+## 🚀 Instalación en Pi
 
-Puedes instalar `pi-task-manager` de dos formas muy sencillas según cómo prefieras usarlo:
+Elegí la opción que mejor se adapte a tu forma de laburar:
 
-### Opción 1: Instalación directa como Pi Package (Recomendada)
-Si eres usuario de **Pi**, puedes instalarlo directamente con el gestor de paquetes oficial de Pi usando la URL de GitHub (¡sin clonar a mano ni configurar rutas!):
+### Opción 1: Instalación directa con Pi (Recomendada)
+Instalalo con el gestor oficial de paquetes de Pi (sin clonar manualmente ni configurar rutas):
 
 ```bash
-# Instalación global en Pi
+# Instalación global para todos tus proyectos en Pi
 pi install https://github.com/CinloDev/pi-task-manager
 
-# O si prefieres instalarlo solo para el proyecto actual:
+# O si querés instalarlo únicamente en el proyecto actual:
 pi install -l https://github.com/CinloDev/pi-task-manager
 ```
 
-Luego, dentro de tu sesión interactiva de Pi, recarga las extensiones:
+Luego, dentro de tu sesión de Pi, recargá las extensiones:
 ```text
 /reload
 ```
 
 ---
 
-### Opción 2: Clonado Local o Desarrollo (Para desarrolladores y colaboradores)
-Si quieres clonar el código y tenerlo vinculado en vivo:
+### Opción 2: Clonado Local (Para desarrollo o contribución)
+Si querés clonar el código para modificarlo o probarlo en vivo:
 
 ```bash
 # 1. Clonar el repositorio
@@ -99,60 +63,72 @@ cd pi-task-manager
 # 2. Instalar dependencias
 pnpm install
 
-# 3. Enlazar la extensión local en tu Pi
+# 3. Enlazar la extensión localmente en tu Pi
 ln -s "$(pwd)" ~/.pi/agent/extensions/pi-task-manager
 ```
 
-Dentro de Pi, ejecuta `/reload` y ¡listo! Ya tienes activas todas las herramientas, comandos y el modal flotante con <kbd>alt+t</kbd> o <kbd>ctrl+shift+t</kbd> (macOS / universal).
+Dentro de Pi ejecutá `/reload` y ya queda activo.
 
 ---
 
-## 🎯 ¿Cómo se usa? (Primeros Pasos)
+## 🎯 ¿Cómo se usa?
 
-Una vez instalado, **no necesitas configurar nada**. Al abrir cualquier proyecto en tu terminal con Pi:
+### 1. Atajo Rápido de Teclado
+Presioná en cualquier momento dentro de Pi:
+* **Linux / Windows**: <kbd>Alt + T</kbd> o <kbd>Ctrl + Shift + T</kbd>
+* **macOS**: <kbd>Control + Shift + T</kbd> (o <kbd>⌥ Option + T</kbd>)
 
-1. **Abrir el Modal Flotante Interactivo**:
-   Presiona **<kbd>alt+t</kbd>** o **<kbd>ctrl+shift+t</kbd>** (o en macOS: **<kbd>⌥+T</kbd>** / **<kbd>Control + Shift + T</kbd>**; también puedes escribir `/task-manager`). Se abrirá la ventana modal Obsidian violeta en el centro de tu terminal:
-   * Podrás inicializar el gestor si es la primera vez (`.pi/task-manager.json`).
-   * Podrás ver el avance de tus fases y tareas.
-   * Podrás agregar y tildar *Todos* rápidos al instante con <kbd>Enter</kbd>.
-   * Podrás abrir el visor gráfico en tu navegador con la opción `[1]`.
-2. **Uso para Agentes de IA (Orquestador y Subagentes)**:
-   Si usas flujos con agentes o SDD, Pi ya tiene registradas las herramientas automáticas:
-   * `task_manager_read`: El agente lee las tareas sin que tengas que explicárselas.
-   * `task_manager_update_task`: El agente tilda tareas como `completed` o `in_progress` cuando termina de programar.
-   * `task_manager_sync`: Reconcilia automáticamente commits de Git y tareas en `tasks.md` o OpenSpec.
+Se abrirá el **modal flotante interactivo** en el centro de tu terminal.
 
----
+### 2. Navegación con Mouse y Teclado
+* 🖱️ **Rueda del mouse**: Scrolleá arriba y abajo por las listas y menús.
+* 👆 **Click izquierdo**: Click simple selecciona el elemento; doble click (o click en el ítem enfocado) ejecuta la acción o tilda la tarea.
+* ⌨️ **Teclado**: Flechas (`↑`/`↓`) para moverte, <kbd>Enter</kbd> para accionar y <kbd>Esc</kbd> para volver o salir.
 
-## 📖 Guía de Uso
+### 3. Comandos Principales en la CLI
+Podés usar `/task-manager` o el alias corto `/tm`:
 
-### Atajo Rápido
-Presiona **<kbd>alt+t</kbd>** o **<kbd>ctrl+shift+t</kbd>** (en macOS: **<kbd>⌥+T</kbd>** o **<kbd>Control + Shift + T</kbd>**) en cualquier momento dentro de Pi para abrir la ventana modal interactiva en la terminal.
-
-### Comandos de la CLI
 ```bash
-/task-manager           # Abre el modal interactivo de gestión (alias: /tm)
+/task-manager           # Abre el modal interactivo en la terminal (alias: /tm)
 /task-manager open      # Abre el dashboard visual en tu navegador predeterminado
 /task-manager sync      # Sincroniza git commits, telemetría y tareas markdown
 /task-manager status    # Muestra el resumen de métricas en la terminal
 /task-manager list      # Lista completa de fases y tareas en la terminal
 /task-manager add <txt> # Agrega una tarea rápida con prioridad auto-asignada
-/task-manager export    # Exporta una copia de Task-Manager-Portable.html bajo demanda
+/task-manager export    # Exporta una copia estática de Task-Manager-Portable.html bajo demanda
 ```
+
+---
+
+## 🤖 Uso para Agentes de IA (Orquestador y Subagentes)
+
+Cuando trabajás con agentes o flujos de SDD (Spec-Driven Development), Pi dispone de herramientas nativas automáticas:
+
+* **`task_manager_read`**: El agente consulta fases, tareas, métricas y estado de Git sin que tengas que explicárselo en el prompt.
+* **`task_manager_update_task`**: El agente actualiza el estado de la tarea (`in_progress`, `completed`, `blocked`), anota detalles técnicos y vincula el commit realizado.
+* **`task_manager_sync`**: Reconcilia automáticamente las tareas definidas en archivos markdown (`tasks.md` o OpenSpec) con las ramas de Git.
+
+---
+
+## 🎨 Personalización Visual
+
+* **Adopción Dinámica de Temas**: El modal en terminal adopta automáticamente los colores y tokens de tu tema activo en Pi (como `Cinlodev CUTE`, temas oscuros o claros).
+* **Variables de Entorno Opcionales**: Podés anular manualmente los colores del modal configurando:
+  * `PI_TASK_MANAGER_BG`: Secuencia ANSI de color de fondo (ej. `\x1b[48;2;20;10;40m`).
+  * `PI_TASK_MANAGER_BORDER`: Secuencia ANSI para los bordes dobles (ej. `\x1b[38;2;168;85;247m`).
 
 ---
 
 ## 🛠️ Desarrollo y Tests
 
 ```bash
-# Ejecutar suite de pruebas unitarias y de integración
+# Ejecutar suite de pruebas unitarias
 pnpm test
 
-# Verificación estricta de tipos TypeScript
+# Verificación de tipos con TypeScript
 pnpm typecheck
 
-# Ensamblar plantilla HTML portable para exportación
+# Compilar plantilla HTML en memoria
 pnpm run assemble
 ```
 
@@ -161,7 +137,7 @@ pnpm run assemble
 ## 👥 Reconocimientos y Créditos
 
 Este proyecto está basado e inspirado en la visión original del plugin y panel de control portable creado por **[Ramón (@RamonsDka)](https://github.com/RamonsDka/opencode-sdd-profile-manager)**.  
-A partir de esa base, se rediseñó la arquitectura para desacoplar el estado en `.pi/task-manager.json`, eliminar la contaminación de archivos HTML en repositorios, incorporar el modal flotante TUI en la terminal y conectar la telemetría operativa en tiempo real con el runtime de **Pi**.
+A partir de esa base, se rediseñó la arquitectura para desacoplar el estado en `.pi/task-manager.json`, eliminar la contaminación de archivos HTML en repositorios, incorporar el modal flotante TUI con soporte de mouse y sincronizar la telemetría operativa en tiempo real con el runtime de **Pi**.
 
 ---
 
