@@ -21,7 +21,7 @@ Antes de enviar un Pull Request o proponer cambios, ten en cuenta las siguientes
    - El visualizador debe funcionar sobre `file://` con **cero dependencias externas en runtime**: nada de llamadas a CDNs, imports de red ni fuentes externas que requieran conexión a internet.
 
 4. **Experiencia TUI en Terminal Completa**:
-   - Todo el flujo del menú interactivo (`alt+t`) debe ocurrir dentro del componente flotante `TaskManagerModalOverlay`, sin expulsar al usuario a inputs secundarios ni cerrar la ventana inesperadamente.
+   - Todo el flujo del menú interactivo (`alt+t` / `ctrl+shift+t`) debe ocurrir dentro del componente flotante `TaskManagerModalOverlay`, sin expulsar al usuario a inputs secundarios ni cerrar la ventana inesperadamente.
 
 ---
 

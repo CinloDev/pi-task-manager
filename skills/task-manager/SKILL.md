@@ -98,4 +98,4 @@ When serializing or writing to the `#tm-state` block, any occurrence of `</scrip
 - `/task-manager list`: Show full formatted checklist in terminal.
 - `/task-manager add <text>`: Quick todo item addition.
 - `/task-manager export [path]`: Export standalone portable HTML file on-demand.
-- `alt+t`: Quick shortcut to open the interactive menu.
+- `alt+t` / `ctrl+shift+t` (macOS: `⌥+T` or `Control+Shift+T`): Quick shortcut to open the interactive menu.

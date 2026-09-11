@@ -43,7 +43,7 @@ Seguimiento paso a paso de fases de desarrollo (*Setup*, *Core*, *Testing*, *Rev
 * **Visualizador efímero**: Al ejecutar `/task-manager open`, la interfaz se compila al vuelo en el directorio temporal del sistema (`os.tmpdir()`) y se abre en tu navegador predeterminado (Linux, macOS y WSL2).
 * **Exportación on-demand**: Si necesitas compartir el dashboard estático o publicarlo offline, puedes exportarlo en cualquier momento con `/task-manager export`.
 
-### 2. Modal Flotante TUI en la Terminal (<kbd>alt+t</kbd>)
+### 2. Modal Flotante TUI en la Terminal (<kbd>alt+t</kbd> / <kbd>ctrl+shift+t</kbd>)
 * **Experiencia de ventana modal interactiva**: Diseñado con bordes dobles Unicode (`╔═╗`, `║`, `╚═╝`) y fondo violeta oscuro Obsidian (`#140a28`).
 * **Todo el flujo sin salir del modal**:
   * 🌐 Abrir el visualizador en el navegador.
@@ -102,7 +102,7 @@ pnpm install
 ln -s "$(pwd)" ~/.pi/agent/extensions/pi-task-manager
 ```
 
-Dentro de Pi, ejecuta `/reload` y ¡listo! Ya tienes activas todas las herramientas, comandos y el modal flotante con <kbd>alt+t</kbd>.
+Dentro de Pi, ejecuta `/reload` y ¡listo! Ya tienes activas todas las herramientas, comandos y el modal flotante con <kbd>alt+t</kbd> o <kbd>ctrl+shift+t</kbd> (macOS / universal).
 
 ---
 
@@ -111,7 +111,7 @@ Dentro de Pi, ejecuta `/reload` y ¡listo! Ya tienes activas todas las herramien
 Una vez instalado, **no necesitas configurar nada**. Al abrir cualquier proyecto en tu terminal con Pi:
 
 1. **Abrir el Modal Flotante Interactivo**:
-   Presiona **<kbd>alt+t</kbd>** (o escribe `/task-manager`). Se abrirá la ventana modal Obsidian violeta en el centro de tu terminal:
+   Presiona **<kbd>alt+t</kbd>** o **<kbd>ctrl+shift+t</kbd>** (o en macOS: **<kbd>⌥+T</kbd>** / **<kbd>Control + Shift + T</kbd>**; también puedes escribir `/task-manager`). Se abrirá la ventana modal Obsidian violeta en el centro de tu terminal:
    * Podrás inicializar el gestor si es la primera vez (`.pi/task-manager.json`).
    * Podrás ver el avance de tus fases y tareas.
    * Podrás agregar y tildar *Todos* rápidos al instante con <kbd>Enter</kbd>.
@@ -127,7 +127,7 @@ Una vez instalado, **no necesitas configurar nada**. Al abrir cualquier proyecto
 ## 📖 Guía de Uso
 
 ### Atajo Rápido
-Presiona **<kbd>alt+t</kbd>** en cualquier momento dentro de Pi para abrir la ventana modal interactiva en la terminal.
+Presiona **<kbd>alt+t</kbd>** o **<kbd>ctrl+shift+t</kbd>** (en macOS: **<kbd>⌥+T</kbd>** o **<kbd>Control + Shift + T</kbd>**) en cualquier momento dentro de Pi para abrir la ventana modal interactiva en la terminal.
 
 ### Comandos de la CLI
 ```bash
