@@ -148,4 +148,69 @@ describe("TaskManagerModalOverlay TUI Component", () => {
     expect(normalizeModalKey("\x1b[F")).toBe("end");
     expect(normalizeModalKey("\x1bOF")).toBe("end");
   });
+
+  it("adopts dynamic theme tokens from Pi theme environment when available", () => {
+    const state = createInitialState("Themed Project", "2.0.0");
+    const mockTheme = {
+      fg: vi.fn((color: string, text: string) => `[fg:${color}]${text}[/fg]`),
+      bg: vi.fn((color: string, text: string) => `[bg:${color}]${text}[/bg]`),
+      getFgAnsi: vi.fn((_color: string) => `\x1b[38;2;142;68;173m`), // Custom purple border
+      getBgAnsi: vi.fn((_color: string) => `\x1b[48;2;26;18;24m`), // Custom theme bg
+      bold: vi.fn((text: string) => `[bold]${text}[/bold]`),
+    };
+
+    const overlay = new TaskManagerModalOverlay(
+      "Themed Project",
+      ["Menu Item 1"],
+      state,
+      mockTheme as any,
+      null,
+      () => {}
+    );
+
+    const lines = overlay.render(75);
+    const rendered = lines.join("\n");
+
+    // Must adopt theme background ANSI sequence
+    expect(rendered).toContain("\x1b[48;2;26;18;24m");
+    // Must adopt theme border ANSI sequence
+    expect(rendered).toContain("\x1b[38;2;142;68;173m");
+    // Theme methods must have been called
+    expect(mockTheme.getBgAnsi).toHaveBeenCalledWith("customMessageBg");
+    expect(mockTheme.getFgAnsi).toHaveBeenCalledWith("border");
+    expect(mockTheme.fg).toHaveBeenCalledWith("accent", expect.any(String));
+    expect(mockTheme.bold).toHaveBeenCalled();
+  });
+
+  it("respects environment variables PI_TASK_MANAGER_BG and PI_TASK_MANAGER_BORDER", () => {
+    const origBg = process.env.PI_TASK_MANAGER_BG;
+    const origBorder = process.env.PI_TASK_MANAGER_BORDER;
+
+    try {
+      process.env.PI_TASK_MANAGER_BG = "\x1b[48;2;30;20;50m";
+      process.env.PI_TASK_MANAGER_BORDER = "\x1b[38;2;200;100;250m";
+
+      const state = createInitialState("Env Var Project", "1.0.0");
+      const overlay = new TaskManagerModalOverlay(
+        "Env Var Project",
+        ["Item 1"],
+        state,
+        null,
+        null,
+        () => {}
+      );
+
+      const lines = overlay.render(70);
+      const rendered = lines.join("\n");
+
+      expect(rendered).toContain("\x1b[48;2;30;20;50m");
+      expect(rendered).toContain("\x1b[38;2;200;100;250m");
+    } finally {
+      if (origBg === undefined) delete process.env.PI_TASK_MANAGER_BG;
+      else process.env.PI_TASK_MANAGER_BG = origBg;
+
+      if (origBorder === undefined) delete process.env.PI_TASK_MANAGER_BORDER;
+      else process.env.PI_TASK_MANAGER_BORDER = origBorder;
+    }
+  });
 });
