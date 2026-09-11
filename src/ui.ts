@@ -221,6 +221,39 @@ export function normalizeModalKey(data: string): string {
   return data;
 }
 
+export type TuiMouseEventType = "press" | "release" | "move" | "drag" | "click" | "wheel";
+export type TuiMouseButton = "left" | "middle" | "right" | "none";
+
+export interface TuiMouseEvent {
+  type: TuiMouseEventType;
+  button?: TuiMouseButton;
+  x: number;
+  y: number;
+  screenX?: number;
+  screenY?: number;
+  width?: number;
+  height?: number;
+  shift?: boolean;
+  alt?: boolean;
+  ctrl?: boolean;
+  wheelDelta?: number;
+  clickCount?: number;
+}
+
+export interface TuiMouseEventResult {
+  handled?: boolean;
+  capture?: boolean;
+  focus?: boolean;
+  render?: boolean;
+}
+
+interface ClickTarget {
+  y: number;
+  type: "menu_item" | "list_item" | "task_item" | "status_item" | "export_choice" | "action";
+  index?: number;
+  key?: string;
+}
+
 export class TaskManagerModalOverlay {
   private title: string;
   private manager: TaskManager | null = null;
@@ -233,6 +266,9 @@ export class TaskManagerModalOverlay {
   private view: "menu" | "list" | "add_todo" | "select_task" | "select_status" | "confirm_export" = "menu";
   private selectedMenuIndex = 0;
   private banner: { text: string; type: "info" | "success" | "warning" } | null = null;
+
+  // Mouse click targets for currently rendered frame
+  private clickTargets: ClickTarget[] = [];
 
   // Confirm export view state
   private selectedExportChoice = 0;
@@ -767,6 +803,113 @@ export class TaskManagerModalOverlay {
     this.tui?.requestRender?.();
   }
 
+  handleMouse(event: TuiMouseEvent): TuiMouseEventResult | undefined {
+    if (!event) return undefined;
+
+    // Mouse wheel scrolling across all navigatable views
+    if (event.type === "wheel") {
+      const delta = event.wheelDelta ?? 0;
+      if (delta > 0) {
+        this.handleInput("\x1b[B"); // down
+        return { handled: true, render: true };
+      } else if (delta < 0) {
+        this.handleInput("\x1b[A"); // up
+        return { handled: true, render: true };
+      }
+      return { handled: true };
+    }
+
+    // Left click handling
+    if (event.type === "click" && (event.button === "left" || event.button === undefined)) {
+      const target = this.clickTargets.find((t) => t.y === event.y);
+      if (!target) return undefined;
+
+      const clickCount = event.clickCount ?? 1;
+
+      switch (target.type) {
+        case "menu_item": {
+          if (target.index !== undefined) {
+            const isAlreadySelected = this.selectedMenuIndex === target.index;
+            this.selectedMenuIndex = target.index;
+            if (isAlreadySelected || clickCount >= 2) {
+              this.handleInput("\r");
+            } else {
+              this.tui?.requestRender?.();
+            }
+            return { handled: true, render: true };
+          }
+          break;
+        }
+
+        case "list_item": {
+          if (target.index !== undefined) {
+            const isAlreadySelected = this.listSelectionIndex === target.index;
+            this.listSelectionIndex = target.index;
+            if (isAlreadySelected || clickCount >= 2) {
+              this.handleInput("\r");
+            } else {
+              this.tui?.requestRender?.();
+            }
+            return { handled: true, render: true };
+          }
+          break;
+        }
+
+        case "task_item": {
+          if (target.index !== undefined) {
+            const isAlreadySelected = this.selectedTaskIndex === target.index;
+            this.selectedTaskIndex = target.index;
+            if (isAlreadySelected || clickCount >= 2) {
+              this.handleInput("\r");
+            } else {
+              this.tui?.requestRender?.();
+            }
+            return { handled: true, render: true };
+          }
+          break;
+        }
+
+        case "status_item": {
+          if (target.index !== undefined) {
+            const isAlreadySelected = this.selectedStatusIndex === target.index;
+            this.selectedStatusIndex = target.index;
+            if (isAlreadySelected || clickCount >= 2) {
+              this.handleInput("\r");
+            } else {
+              this.tui?.requestRender?.();
+            }
+            return { handled: true, render: true };
+          }
+          break;
+        }
+
+        case "export_choice": {
+          if (target.index !== undefined) {
+            const isAlreadySelected = this.selectedExportChoice === target.index;
+            this.selectedExportChoice = target.index;
+            if (isAlreadySelected || clickCount >= 2) {
+              this.handleInput("\r");
+            } else {
+              this.tui?.requestRender?.();
+            }
+            return { handled: true, render: true };
+          }
+          break;
+        }
+
+        case "action": {
+          if (target.key) {
+            this.handleInput(target.key);
+            return { handled: true, render: true };
+          }
+          break;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
   invalidate(): void {}
   dispose(): void {}
 
@@ -878,6 +1021,9 @@ export class TaskManagerModalOverlay {
     const palette = this.getPalette();
     const RESET = "\x1b[0m";
 
+    this.clickTargets = [];
+    const lines: string[] = [];
+
     const topDouble = (titleStr: string) => {
       const vis = getVisibleWidth(titleStr);
       const leftW = Math.max(2, Math.floor((innerW - vis) / 2));
@@ -905,10 +1051,16 @@ export class TaskManagerModalOverlay {
     const botDouble = () =>
       palette.bgAnsi + palette.borderFgAnsi + "╚" + "═".repeat(innerW) + "╝" + RESET;
 
-    // Keep solid theme background across all text segments without letting \x1b[0m punch transparent holes
-    const row = (content: string) => {
+    // Keep solid theme background across all text segments and record click targets
+    const row = (
+      content: string,
+      target?: { type: ClickTarget["type"]; index?: number; key?: string }
+    ) => {
+      if (target) {
+        this.clickTargets.push({ y: lines.length, ...target });
+      }
       const solidContent = content.replace(/\x1b\[0m/g, "\x1b[0m" + palette.bgAnsi);
-      return (
+      lines.push(
         palette.bgAnsi +
         palette.borderFgAnsi +
         "║" +
@@ -925,12 +1077,10 @@ export class TaskManagerModalOverlay {
 
     const emptyRow = () => row("");
 
-    const lines: string[] = [];
-
     // Header with double borders and theme background
     const titleBar = ` ${palette.heading(palette.bold(`🗂️  ${this.title}`))} `;
     lines.push(topDouble(titleBar));
-    lines.push(emptyRow());
+    emptyRow();
 
     // Project progress subhead
     if (this.state) {
@@ -951,19 +1101,15 @@ export class TaskManagerModalOverlay {
       const filledLen = Math.round((pct / 100) * barLen);
       const bar = "█".repeat(filledLen) + "░".repeat(barLen - filledLen);
 
-      lines.push(
-        row(
-          `  ${palette.text(palette.bold(meta.projectName))} ${palette.muted(
-            `(v${meta.version || "1.0.0"}) · 🌿 ${branch}`
-          )}`
-        )
+      row(
+        `  ${palette.text(palette.bold(meta.projectName))} ${palette.muted(
+          `(v${meta.version || "1.0.0"}) · 🌿 ${branch}`
+        )}`
       );
-      lines.push(
-        row(
-          `  ${palette.success(bar)} ${palette.text(`${pct}%`)} ${palette.muted(
-            `(${completed}/${totalTasks} completadas · ${inProg} en progreso)`
-          )}`
-        )
+      row(
+        `  ${palette.success(bar)} ${palette.text(`${pct}%`)} ${palette.muted(
+          `(${completed}/${totalTasks} completadas · ${inProg} en progreso)`
+        )}`
       );
       lines.push(midDouble());
     }
@@ -976,37 +1122,37 @@ export class TaskManagerModalOverlay {
           : this.banner.type === "warning"
           ? `${palette.warning("▲")}`
           : `${palette.function("ℹ")}`;
-      lines.push(emptyRow());
-      lines.push(row(` ${icon} ${palette.text(this.banner.text)}`));
-      lines.push(emptyRow());
+      emptyRow();
+      row(` ${icon} ${palette.text(this.banner.text)}`);
+      emptyRow();
       lines.push(midDouble());
     }
 
     // Switch view content
     switch (this.view) {
       case "menu":
-        lines.push(...this.renderMenuView(row, emptyRow, palette));
+        this.renderMenuView(row, emptyRow, palette);
         break;
       case "list":
-        lines.push(...this.renderListView(row, emptyRow, innerW, palette));
+        this.renderListView(row, emptyRow, innerW, palette);
         break;
       case "add_todo":
-        lines.push(...this.renderAddTodoView(row, emptyRow, palette));
+        this.renderAddTodoView(row, emptyRow, palette);
         break;
       case "select_task":
-        lines.push(...this.renderSelectTaskView(row, emptyRow, palette));
+        this.renderSelectTaskView(row, emptyRow, palette);
         break;
       case "select_status":
-        lines.push(...this.renderSelectStatusView(row, emptyRow, palette));
+        this.renderSelectStatusView(row, emptyRow, palette);
         break;
       case "confirm_export":
-        lines.push(...this.renderConfirmExportView(row, emptyRow, palette));
+        this.renderConfirmExportView(row, emptyRow, palette);
         break;
     }
 
     lines.push(midDouble());
 
-    // Footer helper row
+    // Footer helper row (click acts as back / cancel)
     let helper = " ↑/↓: Navegar · 1-7: Elegir · Enter: Aceptar · Esc: Salir";
     if (this.view === "list") helper = " ↑/↓/j/k: Scrollear · Esc/Enter: Volver al menú principal";
     if (this.view === "add_todo") helper = " Escribí el texto de la tarea · Enter: Guardar · Esc: Cancelar";
@@ -1014,18 +1160,18 @@ export class TaskManagerModalOverlay {
     if (this.view === "select_status") helper = " ↑/↓/1-4: Seleccionar estado · Enter: Confirmar · Esc: Atrás";
     if (this.view === "confirm_export") helper = " ↑/↓/1-2: Seleccionar · Enter: Confirmar · Esc: Cancelar y volver";
 
-    lines.push(row(` ${palette.muted(helper)}`));
+    row(` ${palette.muted(helper)}`, { type: "action", key: "\x1b" });
     lines.push(botDouble());
 
     return lines;
   }
 
   private renderMenuView(
-    row: (s: string) => string,
-    emptyRow: () => string,
+    row: (s: string, target?: { type: ClickTarget["type"]; index?: number; key?: string }) => void,
+    emptyRow: () => void,
     palette: ReturnType<typeof this.getPalette>
-  ): string[] {
-    const lines: string[] = [emptyRow()];
+  ): void {
+    emptyRow();
     const items = this.getMenuItems();
 
     for (let i = 0; i < items.length; i++) {
@@ -1034,31 +1180,36 @@ export class TaskManagerModalOverlay {
       const prefix = `[${i + 1}] `;
 
       if (isSel) {
-        lines.push(row(` ${palette.highlight("❯")} ${palette.accent(palette.bold(`${prefix}${item}`))}`));
+        row(` ${palette.highlight("❯")} ${palette.accent(palette.bold(`${prefix}${item}`))}`, {
+          type: "menu_item",
+          index: i,
+        });
       } else {
-        lines.push(row(`   ${palette.muted(prefix)}${palette.text(item)}`));
+        row(`   ${palette.muted(prefix)}${palette.text(item)}`, {
+          type: "menu_item",
+          index: i,
+        });
       }
     }
 
-    lines.push(emptyRow());
-    return lines;
+    emptyRow();
   }
 
   private renderListView(
-    row: (s: string) => string,
-    emptyRow: () => string,
+    row: (s: string, target?: { type: ClickTarget["type"]; index?: number; key?: string }) => void,
+    emptyRow: () => void,
     _innerW: number,
     palette: ReturnType<typeof this.getPalette>
-  ): string[] {
-    const lines: string[] = [emptyRow()];
-    lines.push(row(` ${palette.heading(palette.bold("📋 Lista Interactiva de Fases, Tareas y Todos"))}`));
-    lines.push(row(`   ${palette.muted("Enter / Espacio: cambiar estado de tarea o marcar/desmarcar Todo")}`));
-    lines.push(emptyRow());
+  ): void {
+    emptyRow();
+    row(` ${palette.heading(palette.bold("📋 Lista Interactiva de Fases, Tareas y Todos"))}`);
+    row(`   ${palette.muted("Enter / Espacio / Click: cambiar estado de tarea o marcar/desmarcar Todo")}`);
+    emptyRow();
 
     if (!this.state || !this.allListItems.length) {
-      lines.push(row(`   ${palette.muted("Sin elementos registrados todavía.")}`));
-      lines.push(emptyRow());
-      return lines;
+      row(`   ${palette.muted("Sin elementos registrados todavía.")}`);
+      emptyRow();
+      return;
     }
 
     const windowSize = 9;
@@ -1082,12 +1233,10 @@ export class TaskManagerModalOverlay {
         if (item.phase.id !== lastPhaseId) {
           lastPhaseId = item.phase.id;
           const doneCount = item.phase.tasks.filter((t) => t.status === "completed").length;
-          lines.push(
-            row(
-              ` ${palette.muted(
-                palette.bold(`🔹 Fase ${item.phase.number}: ${item.phase.title} [${doneCount}/${item.phase.tasks.length}]`)
-              )}`
-            )
+          row(
+            ` ${palette.muted(
+              palette.bold(`🔹 Fase ${item.phase.number}: ${item.phase.title} [${doneCount}/${item.phase.tasks.length}]`)
+            )}`
           );
         }
 
@@ -1104,56 +1253,58 @@ export class TaskManagerModalOverlay {
         const owner = t.owner ? ` ${palette.muted(`@${t.owner}`)}` : "";
 
         if (isSelected) {
-          lines.push(
-            row(
-              ` ${palette.highlight("❯")} [${t.id}] ${icon} ${palette.accent(palette.bold(t.title))}${tag}${owner} ${palette.warning(
-                "↵ editar"
-              )}`
-            )
+          row(
+            ` ${palette.highlight("❯")} [${t.id}] ${icon} ${palette.accent(palette.bold(t.title))}${tag}${owner} ${palette.warning(
+              "↵ editar"
+            )}`,
+            { type: "list_item", index: idx }
           );
         } else {
-          lines.push(row(`   [${t.id}] ${icon} ${palette.text(t.title)}${tag}${owner}`));
+          row(`   [${t.id}] ${icon} ${palette.text(t.title)}${tag}${owner}`, {
+            type: "list_item",
+            index: idx,
+          });
         }
       } else {
         const td = item.todo;
         const check = td.done ? palette.success("[✔] HECHO") : palette.warning("[ ] PENDIENTE");
         if (isSelected) {
-          lines.push(
-            row(
-              ` ${palette.highlight("❯")} 📌 [${td.priority}] ${check} ${palette.accent(palette.bold(td.text))} ${palette.warning(
-                "↵ tildar"
-              )}`
-            )
+          row(
+            ` ${palette.highlight("❯")} 📌 [${td.priority}] ${check} ${palette.accent(palette.bold(td.text))} ${palette.warning(
+              "↵ tildar"
+            )}`,
+            { type: "list_item", index: idx }
           );
         } else {
-          lines.push(row(`   📌 ${palette.muted(`[${td.priority}]`)} ${check} ${palette.text(td.text)}`));
+          row(`   📌 ${palette.muted(`[${td.priority}]`)} ${check} ${palette.text(td.text)}`, {
+            type: "list_item",
+            index: idx,
+          });
         }
       }
     }
 
     if (this.allListItems.length > windowSize) {
       const pos = `${this.listSelectionIndex + 1}/${this.allListItems.length}`;
-      lines.push(emptyRow());
-      lines.push(row(`  ${palette.muted(`--- Elemento ${pos} (↑/↓ para moverte · Enter para accionar) ---`)}`));
+      emptyRow();
+      row(`  ${palette.muted(`--- Elemento ${pos} (Rueda/Flechas para moverte · Click para accionar) ---`)}`);
     } else {
-      lines.push(emptyRow());
+      emptyRow();
     }
-
-    return lines;
   }
 
   private renderAddTodoView(
-    row: (s: string) => string,
-    emptyRow: () => string,
+    row: (s: string, target?: { type: ClickTarget["type"]; index?: number; key?: string }) => void,
+    emptyRow: () => void,
     palette: ReturnType<typeof this.getPalette>
-  ): string[] {
-    const lines: string[] = [emptyRow()];
-    lines.push(row(` ${palette.heading(palette.bold("➕ Agregar Nueva Tarea Rápida (Todo)"))}`));
-    lines.push(emptyRow());
-    lines.push(row(`   ${palette.muted("Escribí la descripción de la tarea:")}`));
-    lines.push(emptyRow());
-    lines.push(row(`   ${palette.success("❯")} ${palette.text(`\x1b[4m${this.todoInput || " "}\x1b[0m`)}${palette.accent("█")}`));
-    lines.push(emptyRow());
+  ): void {
+    emptyRow();
+    row(` ${palette.heading(palette.bold("➕ Agregar Nueva Tarea Rápida (Todo)"))}`);
+    emptyRow();
+    row(`   ${palette.muted("Escribí la descripción de la tarea:")}`);
+    emptyRow();
+    row(`   ${palette.success("❯")} ${palette.text(`\x1b[4m${this.todoInput || " "}\x1b[0m`)}${palette.accent("█")}`);
+    emptyRow();
 
     // Priority selector preview
     const prioOptions = this.todoPriorityOptions
@@ -1163,21 +1314,20 @@ export class TaskManagerModalOverlay {
       })
       .join(" · ");
 
-    lines.push(row(`   ${palette.muted(`Prioridad asignada: ${prioOptions} (Tab: cambiar)`)}`));
-    lines.push(emptyRow());
-    lines.push(row(`   ${palette.muted("Presioná Enter para guardar o Escape para cancelar.")}`));
-    lines.push(emptyRow());
-    return lines;
+    row(`   ${palette.muted(`Prioridad asignada: ${prioOptions} (Tab: cambiar)`)}`);
+    emptyRow();
+    row(`   ${palette.muted("Presioná Enter para guardar o Escape para cancelar.")}`);
+    emptyRow();
   }
 
   private renderSelectTaskView(
-    row: (s: string) => string,
-    emptyRow: () => string,
+    row: (s: string, target?: { type: ClickTarget["type"]; index?: number; key?: string }) => void,
+    emptyRow: () => void,
     palette: ReturnType<typeof this.getPalette>
-  ): string[] {
-    const lines: string[] = [emptyRow()];
-    lines.push(row(` ${palette.heading(palette.bold("✏️ Seleccionar Tarea para Actualizar Estado"))}`));
-    lines.push(emptyRow());
+  ): void {
+    emptyRow();
+    row(` ${palette.heading(palette.bold("✏️ Seleccionar Tarea para Actualizar Estado"))}`);
+    emptyRow();
 
     const windowSize = 8;
     const scroll = Math.max(
@@ -1201,39 +1351,38 @@ export class TaskManagerModalOverlay {
       const stBadge = `[${task.status}]`;
 
       if (isSel) {
-        lines.push(
-          row(
-            ` ${palette.highlight("❯")} [${task.id}] ${palette.accent(palette.bold(task.title.slice(0, 34)))} ${stColor(
-              stBadge
-            )}`
-          )
+        row(
+          ` ${palette.highlight("❯")} [${task.id}] ${palette.accent(palette.bold(task.title.slice(0, 34)))} ${stColor(
+            stBadge
+          )}`,
+          { type: "task_item", index: idx }
         );
       } else {
-        lines.push(row(`   [${task.id}] ${palette.text(task.title.slice(0, 34))} ${stColor(stBadge)}`));
+        row(`   [${task.id}] ${palette.text(task.title.slice(0, 34))} ${stColor(stBadge)}`, {
+          type: "task_item",
+          index: idx,
+        });
       }
     }
 
-    lines.push(emptyRow());
-    return lines;
+    emptyRow();
   }
 
   private renderSelectStatusView(
-    row: (s: string) => string,
-    emptyRow: () => string,
+    row: (s: string, target?: { type: ClickTarget["type"]; index?: number; key?: string }) => void,
+    emptyRow: () => void,
     palette: ReturnType<typeof this.getPalette>
-  ): string[] {
-    const lines: string[] = [emptyRow()];
-    if (!this.chosenTask) return lines;
+  ): void {
+    emptyRow();
+    if (!this.chosenTask) return;
 
-    lines.push(
-      row(
-        ` ${palette.heading(
-          palette.bold(`✏️ Cambiar Estado: [${this.chosenTask.id}] ${this.chosenTask.title.slice(0, 32)}`)
-        )}`
-      )
+    row(
+      ` ${palette.heading(
+        palette.bold(`✏️ Cambiar Estado: [${this.chosenTask.id}] ${this.chosenTask.title.slice(0, 32)}`)
+      )}`
     );
-    lines.push(row(`   ${palette.muted(`Estado actual: ${this.chosenTask.status}`)}`));
-    lines.push(emptyRow());
+    row(`   ${palette.muted(`Estado actual: ${this.chosenTask.status}`)}`);
+    emptyRow();
 
     for (let i = 0; i < this.statusOptions.length; i++) {
       const opt = this.statusOptions[i];
@@ -1241,38 +1390,39 @@ export class TaskManagerModalOverlay {
       const numPrefix = `[${i + 1}] `;
 
       if (isSel) {
-        lines.push(
-          row(` ${palette.highlight("❯")} ${palette.accent(palette.bold(`${numPrefix}${opt.label} (${opt.status})`))}`)
+        row(
+          ` ${palette.highlight("❯")} ${palette.accent(palette.bold(`${numPrefix}${opt.label} (${opt.status})`))}`,
+          { type: "status_item", index: i }
         );
       } else {
-        lines.push(row(`   ${palette.muted(numPrefix)}${palette.text(`${opt.label} (${opt.status})`)}`));
+        row(`   ${palette.muted(numPrefix)}${palette.text(`${opt.label} (${opt.status})`)}`, {
+          type: "status_item",
+          index: i,
+        });
       }
     }
 
-    lines.push(emptyRow());
-    return lines;
+    emptyRow();
   }
 
   private renderConfirmExportView(
-    row: (s: string) => string,
-    emptyRow: () => string,
+    row: (s: string, target?: { type: ClickTarget["type"]; index?: number; key?: string }) => void,
+    emptyRow: () => void,
     palette: ReturnType<typeof this.getPalette>
-  ): string[] {
-    const lines: string[] = [emptyRow()];
-    lines.push(row(` ${palette.heading(palette.bold("📦 Exportar Dashboard como HTML Autónomo"))}`));
-    lines.push(emptyRow());
-    lines.push(
-      row(
-        `   ${palette.warning("⚠️  Atención:")} ${palette.text(
-          "Esto generará un archivo HTML completo (~320 KB) en:"
-        )}`
-      )
+  ): void {
+    emptyRow();
+    row(` ${palette.heading(palette.bold("📦 Exportar Dashboard como HTML Autónomo"))}`);
+    emptyRow();
+    row(
+      `   ${palette.warning("⚠️  Atención:")} ${palette.text(
+        "Esto generará un archivo HTML completo (~320 KB) en:"
+      )}`
     );
-    lines.push(row(`   ${palette.warning("./Task-Manager-Portable.html")}`));
-    lines.push(emptyRow());
-    lines.push(row(`   ${palette.muted("Úsalo solo si necesitas compartir o publicar el dashboard estático.")}`));
-    lines.push(row(`   ${palette.muted("Para uso local en Pi, el visualizador efímero no ensucia tu repo.")}`));
-    lines.push(emptyRow());
+    row(`   ${palette.warning("./Task-Manager-Portable.html")}`);
+    emptyRow();
+    row(`   ${palette.muted("Úsalo solo si necesitas compartir o publicar el dashboard estático.")}`);
+    row(`   ${palette.muted("Para uso local en Pi, el visualizador efímero no ensucia tu repo.")}`);
+    emptyRow();
 
     const choices = [
       "Sí, exportar archivo HTML a la raíz del proyecto",
@@ -1284,14 +1434,19 @@ export class TaskManagerModalOverlay {
       const prefix = `[${i + 1}] `;
       if (isSel) {
         const choiceColor = i === 0 ? palette.success : palette.warning;
-        lines.push(row(` ${palette.highlight("❯")} ${choiceColor(palette.bold(`${prefix}${choices[i]}`))}`));
+        row(` ${palette.highlight("❯")} ${choiceColor(palette.bold(`${prefix}${choices[i]}`))}`, {
+          type: "export_choice",
+          index: i,
+        });
       } else {
-        lines.push(row(`   ${palette.muted(prefix)}${palette.text(choices[i])}`));
+        row(`   ${palette.muted(prefix)}${palette.text(choices[i])}`, {
+          type: "export_choice",
+          index: i,
+        });
       }
     }
 
-    lines.push(emptyRow());
-    return lines;
+    emptyRow();
   }
 }
 

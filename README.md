@@ -44,14 +44,15 @@ Seguimiento paso a paso de fases de desarrollo (*Setup*, *Core*, *Testing*, *Rev
 * **Exportación on-demand**: Si necesitas compartir el dashboard estático o publicarlo offline, puedes exportarlo en cualquier momento con `/task-manager export`.
 
 ### 2. Modal Flotante TUI en la Terminal (<kbd>alt+t</kbd> / <kbd>ctrl+shift+t</kbd>)
-* **Experiencia de ventana modal interactiva**: Diseñado con bordes dobles Unicode (`╔═╗`, `║`, `╚═╝`) y fondo violeta oscuro Obsidian (`#140a28`).
+* **Experiencia de ventana modal interactiva**: Diseñado con bordes dobles Unicode (`╔═╗`, `║`, `╚═╝`) y armonización dinámica con el tema configurado en Pi (`Cinlodev CUTE`, temas oscuros/claros o variables de entorno).
+* **Soporte completo de Mouse**: Navega de forma natural con la rueda del ratón (`wheel`), usa click simple para seleccionar y doble click (o click en el ítem enfocado) para abrir opciones, tildar *Todos* o cambiar estados.
 * **Todo el flujo sin salir del modal**:
   * 🌐 Abrir el visualizador en el navegador.
   * 🔄 Sincronizar Git y tareas en vivo.
-  * 📋 **Lista interactiva completa**: Navega con flechas (`↑`/`↓`), y con <kbd>Enter</kbd> o <kbd>Espacio</kbd> tilda/destilda Todos o cambia de estado las tareas de fase directamente.
+  * 📋 **Lista interactiva completa**: Navega con flechas (`↑`/`↓`) o rueda del mouse, y con <kbd>Enter</kbd>, <kbd>Espacio</kbd> o click tilda/destilda Todos o cambia de estado las tareas de fase directamente.
   * ➕ **Agregar Todos rápidos con prioridades inteligentes**: Detección automática de la siguiente prioridad libre (`P0` → `P1` → `P2` → `P3`) o selección manual mediante <kbd>Tab</kbd>.
   * ✏️ Modificar estados de tareas con recálculo de progreso inmediato.
-  * 🚪 Salir limpiamente con <kbd>Esc</kbd>.
+  * 🚪 Salir limpiamente con <kbd>Esc</kbd> o click en la barra de ayuda inferior.
 
 ### 3. Telemetría Operativa Real de Tokens y Costos
 * **Medición automática en runtime**: Se suscribe a los eventos del ciclo de vida de Pi (`turn_end`) capturando tokens de entrada, salida, lecturas/escrituras de caché y costo monetario.
