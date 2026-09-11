@@ -36,8 +36,8 @@ describe("Pi Task Manager Extension Registration", () => {
 
     expect(mockPi.registerCommand).toHaveBeenCalledWith("task-manager", expect.any(Object));
     expect(mockPi.registerCommand).toHaveBeenCalledWith("tm", expect.any(Object));
-    expect(mockPi.registerShortcut).toHaveBeenCalledWith("alt+t", expect.any(Object));
-    expect(mockPi.registerShortcut).toHaveBeenCalledWith("ctrl+shift+t", expect.any(Object));
+    expect(mockPi.registerShortcut).toHaveBeenCalledWith("alt+j", expect.any(Object));
+    expect(mockPi.registerShortcut).toHaveBeenCalledWith("ctrl+shift+j", expect.any(Object));
 
     expect(registeredTools["task_manager_read"]).toBeDefined();
     expect(registeredTools["task_manager_update_task"]).toBeDefined();

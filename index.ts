@@ -131,14 +131,14 @@ export default function taskManagerExtension(pi: any): void {
     await runInteractiveMenu(manager, ctx);
   };
 
-  // Shortcut alt+t to toggle task manager interactive menu
-  pi.registerShortcut?.("alt+t", {
+  // Shortcut alt+j to toggle task manager interactive menu
+  pi.registerShortcut?.("alt+j", {
     description: "Abrir menú interactivo de Pi Task Manager",
     handler: openMenuHandler,
   });
 
-  // Shortcut ctrl+shift+t (macOS / universal alternative)
-  pi.registerShortcut?.("ctrl+shift+t", {
+  // Shortcut ctrl+shift+j (macOS / universal alternative)
+  pi.registerShortcut?.("ctrl+shift+j", {
     description: "Abrir menú interactivo de Pi Task Manager (alternativa macOS/universal)",
     handler: openMenuHandler,
   });

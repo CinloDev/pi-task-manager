@@ -14,7 +14,7 @@
 ## ⚡ En 30 Segundos: ¿Qué problema resuelve?
 
 1. **Cero basura en tus repositorios**: Guarda todo el estado del proyecto en un archivo ligero `.pi/task-manager.json` (~3 KB). Se terminaron los archivos HTML gigantes de 7.000 líneas ensuciando tus commits o diffs de Git.
-2. **Modal flotante en tu terminal (`alt+t` / `ctrl+shift+t`)**: Abrí una ventana interactiva en el centro de tu terminal para ver el progreso, tildar tareas con teclado o mouse, y cambiar estados sin salir de Pi.
+2. **Modal flotante en tu terminal (`alt+j` / `ctrl+shift+j`)**: Abrí una ventana interactiva en el centro de tu terminal para ver el progreso, tildar tareas con teclado o mouse, y cambiar estados sin salir de Pi.
 3. **Visualizador web efímero (`/task-manager open`)**: Compila al vuelo el dashboard en memoria y lo abre en tu navegador sin crear archivos permanentes en tu proyecto.
 4. **Telemetría real de tokens y costos**: Registra el consumo real de tokens (entrada, salida, caché, razonamiento) y costos en USD desglosados por modelo y agente.
 
@@ -75,8 +75,8 @@ Dentro de Pi ejecutá `/reload` y ya queda activo.
 
 ### 1. Atajo Rápido de Teclado
 Presioná en cualquier momento dentro de Pi:
-* **Linux / Windows**: <kbd>Alt + T</kbd> o <kbd>Ctrl + Shift + T</kbd>
-* **macOS**: <kbd>Control + Shift + T</kbd> (o <kbd>⌥ Option + T</kbd>)
+* **Linux / Windows**: <kbd>Alt + J</kbd> (o <kbd>Ctrl + Shift + J</kbd>)
+* **macOS**: <kbd>Control + Shift + J</kbd> (o <kbd>⌥ Option + J</kbd>)
 
 Se abrirá el **modal flotante interactivo** en el centro de tu terminal.
 
