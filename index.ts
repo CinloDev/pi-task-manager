@@ -126,13 +126,21 @@ export default function taskManagerExtension(pi: any): void {
     handler: commandHandler,
   });
 
+  const openMenuHandler = async (ctx: UiContext) => {
+    const manager = getManager(ctx);
+    await runInteractiveMenu(manager, ctx);
+  };
+
   // Shortcut alt+t to toggle task manager interactive menu
   pi.registerShortcut?.("alt+t", {
     description: "Abrir menú interactivo de Pi Task Manager",
-    handler: async (ctx: UiContext) => {
-      const manager = getManager(ctx);
-      await runInteractiveMenu(manager, ctx);
-    },
+    handler: openMenuHandler,
+  });
+
+  // Shortcut ctrl+shift+t (macOS / universal alternative)
+  pi.registerShortcut?.("ctrl+shift+t", {
+    description: "Abrir menú interactivo de Pi Task Manager (alternativa macOS/universal)",
+    handler: openMenuHandler,
   });
 
   // Tools for Orchestrator and Subagents

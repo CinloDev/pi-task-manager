@@ -4,6 +4,7 @@ dist/
 .DS_Store
 # Local Pi runtime state
 .atl/
+.pi/gentle-ai/
 # Built portable HTML artifact (generated dynamically or on assemble)
 Task-Manager-Portable.html
 
