@@ -213,4 +213,194 @@ describe("TaskManagerModalOverlay TUI Component", () => {
       else process.env.PI_TASK_MANAGER_BORDER = origBorder;
     }
   });
+
+  it("handles mouse wheel events to scroll and navigate selections", () => {
+    const state = createInitialState("Mouse Wheel Test", "1.0.0");
+    let renderRequested = 0;
+    const mockTui = {
+      requestRender: () => {
+        renderRequested++;
+      },
+    };
+
+    const overlay = new TaskManagerModalOverlay(
+      "Mouse Wheel Test",
+      ["Choice 1", "Choice 2", "Choice 3"],
+      state,
+      null,
+      mockTui,
+      () => {}
+    );
+
+    overlay.render(70);
+
+    // Initial selected index is 0
+    // Scroll down with mouse wheel (wheelDelta: 1)
+    const resDown = overlay.handleMouse({
+      type: "wheel",
+      x: 10,
+      y: 5,
+      wheelDelta: 1,
+    });
+    expect(resDown?.handled).toBe(true);
+    expect(resDown?.render).toBe(true);
+
+    let rendered = overlay.render(70).join("\n");
+    // Choice 2 should now be selected with cursor
+    expect(rendered).toContain("Choice 2");
+    expect(rendered).toContain("❯");
+
+    // Scroll up with mouse wheel (wheelDelta: -1)
+    const resUp = overlay.handleMouse({
+      type: "wheel",
+      x: 10,
+      y: 5,
+      wheelDelta: -1,
+    });
+    expect(resUp?.handled).toBe(true);
+    expect(resUp?.render).toBe(true);
+
+    rendered = overlay.render(70).join("\n");
+    expect(rendered).toContain("Choice 1");
+    expect(rendered).toContain("❯");
+  });
+
+  it("handles mouse click to select and double click to execute choices", () => {
+    const state = createInitialState("Mouse Click Test", "1.0.0");
+    let closedWith: string | undefined = "unset";
+    let renderRequested = 0;
+    const mockTui = {
+      requestRender: () => {
+        renderRequested++;
+      },
+    };
+
+    const overlay = new TaskManagerModalOverlay(
+      "Mouse Click Test",
+      ["Opt A", "Opt B", "Opt C"],
+      state,
+      null,
+      mockTui,
+      (res) => {
+        closedWith = res;
+      }
+    );
+
+    const lines = overlay.render(70);
+
+    // Locate line index of "Opt B" (choice 2)
+    const optBLineIndex = lines.findIndex((l) => l.includes("Opt B"));
+    expect(optBLineIndex).toBeGreaterThan(0);
+
+    // Single click on Opt B -> selects it without closing modal
+    const clickRes = overlay.handleMouse({
+      type: "click",
+      button: "left",
+      x: 15,
+      y: optBLineIndex,
+      clickCount: 1,
+    });
+
+    expect(clickRes?.handled).toBe(true);
+    expect(clickRes?.render).toBe(true);
+    expect(closedWith).toBe("unset");
+
+    // Verify Opt B is now selected
+    const rendered = overlay.render(70).join("\n");
+    expect(rendered).toContain("Opt B");
+    expect(rendered).toContain("❯");
+
+    // Click again on Opt B (or double click) -> executes choice and closes modal
+    const executeRes = overlay.handleMouse({
+      type: "click",
+      button: "left",
+      x: 15,
+      y: optBLineIndex,
+      clickCount: 2,
+    });
+
+    expect(executeRes?.handled).toBe(true);
+    expect(closedWith).toBe("Opt B");
+  });
+
+  it("handles mouse click on footer helper row to exit modal", () => {
+    let closedWith: string | undefined = "unset";
+    const overlay = new TaskManagerModalOverlay(
+      "Footer Click Test",
+      ["Alpha", "Beta"],
+      null,
+      null,
+      null,
+      (res) => {
+        closedWith = res;
+      }
+    );
+
+    const lines = overlay.render(70);
+    // Footer row has helper text
+    const footerLineIndex = lines.findIndex((l) => l.includes("Esc: Salir"));
+    expect(footerLineIndex).toBeGreaterThan(0);
+
+    const res = overlay.handleMouse({
+      type: "click",
+      button: "left",
+      x: 20,
+      y: footerLineIndex,
+    });
+
+    expect(res?.handled).toBe(true);
+    // Escape closes modal with undefined
+    expect(closedWith).toBeUndefined();
+  });
+
+  it("handles mouse click to toggle todo in list view", () => {
+    const state = createInitialState("List Mouse Test", "1.0.0");
+    state.todos = [{ id: "td-1", text: "Test Todo Click", priority: "P1", done: false }];
+    let closed = false;
+
+    const mockManager = {
+      getState: () => state,
+      openInBrowser: async () => ({ success: true, message: "ok" }),
+      sync: () => ({ success: true, message: "synced" }),
+      init: () => ({ success: true, message: "init" }),
+      addTodo: () => ({ success: true, message: "todo added" }),
+      toggleTodo: (id: string) => {
+        const td = state.todos.find((t) => t.id === id);
+        if (td) td.done = !td.done;
+        return { success: true, message: "toggled" };
+      },
+      updateTask: () => ({ success: true, message: "task updated" }),
+      exportHtml: () => ({ success: true, message: "exported" }),
+    };
+
+    const overlay = new TaskManagerModalOverlay(
+      "List Mouse Test",
+      mockManager as any,
+      state,
+      null,
+      { requestRender: () => {} },
+      () => {
+        closed = true;
+      }
+    );
+
+    // Enter list view
+    overlay.handleInput("3");
+
+    const lines = overlay.render(70);
+    const todoLineIndex = lines.findIndex((l) => l.includes("Test Todo Click"));
+    expect(todoLineIndex).toBeGreaterThan(0);
+
+    // Double click on the todo item to toggle it
+    overlay.handleMouse({
+      type: "click",
+      button: "left",
+      x: 10,
+      y: todoLineIndex,
+      clickCount: 2,
+    });
+
+    // Todo should now be toggled to done = true
+    expect(state.todos[0].done).toBe(true);
+  });
 });
